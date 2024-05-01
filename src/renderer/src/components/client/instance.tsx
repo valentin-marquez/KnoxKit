@@ -14,7 +14,7 @@ export default function InstanceComponent({ name, cover, className }: InstancePr
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{name}</CardTitle>
-          <Avatar className="h-4 w-4">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={`${cover}`} alt={`${name}'s cover`} />
             <AvatarFallback>{name}</AvatarFallback>
           </Avatar>
