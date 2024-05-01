@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Card, CardTitle, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -10,20 +9,6 @@ interface InstanceProps {
 }
 
 export default function InstanceComponent({ name, cover, className }: InstanceProps): JSX.Element {
-  // get image from cover url and set local image
-  const [image, setImage] = useState<string | null>(null)
-
-  useEffect(() => {
-    const loadImage = async (): Promise<void> => {
-      const response = await fetch(cover)
-      const blob = await response.blob()
-      const imageUrl = URL.createObjectURL(blob)
-      setImage(imageUrl)
-    }
-
-    loadImage()
-  }, [cover])
-
   return (
     <div className={className}>
       <Card>
