@@ -37,7 +37,7 @@ Currently in active development. Planned release phases:
 KnoxKit is in active development. Feel free to submit issues and pull requests.
 
 ## 📝 License
-[License information pending]
+Licensed under Apache 2.0 with Commons Clause and Steam Workshop compliance. See [LICENSE.md](LICENSE.md) for details.
 
 ---
 *KnoxKit is a community project and is not affiliated with The Indie Stone or Project Zomboid.*
