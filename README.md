@@ -1,34 +1,43 @@
-# electron-app
+# KnoxKit 🧟 - Project Zomboid Instance Manager
 
-An Electron application with React and TypeScript
+> Outsmart the apocalypse, one instance at a time.
 
-## Recommended IDE Setup
+> ⚠️ **Currently Under Development**: First release planned once Steam Workshop collection import functionality is viable.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+## 🎯 Overview
+KnoxKit is a powerful and user-friendly instance manager for Project Zomboid that helps you manage multiple game configurations, mod collections, and system resources efficiently.
 
-## Project Setup
+## ✨ Key Features
+- **Instance Management**: Create, clone, and manage multiple game instances
+- **Steam Workshop Integration**: Seamless mod collection synchronization
+- **Resource Optimization**: Smart resource allocation per instance
+- **Modern UI**: Clean and intuitive interface with dark/light themes
+- **Advanced Configuration**: Custom mod profiles and compatibility checks
 
-### Install
+## 🛠️ Technical Stack
+- **Frontend**: Electron-Vite + TSX/TypeScript
+- **Styling**: Tailwind CSS
+- **Backend Communication**: WebSocket
+- **Game Management**: Python scripts
+- **Steam Integration**: SteamCMD (Anonymous access)
 
-```bash
-$ npm install
-```
+## 🚀 Development Status
+Currently in active development. Planned release phases:
 
-### Development
+1. **Phase 1**: Basic instance management and UI
+2. **Phase 2**: Advanced mod management and resource optimization
+3. **Phase 3**: Community features and performance enhancements
 
-```bash
-$ npm run dev
-```
+## 🔒 Security & Performance
+- Instance sandboxing
+- Resource usage monitoring
+- Automatic performance optimization
 
-### Build
+## 🤝 Contributing
+KnoxKit is in active development. Feel free to submit issues and pull requests.
 
-```bash
-# For windows
-$ npm run build:win
+## 📝 License
+[License information pending]
 
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
-```
+---
+*KnoxKit is a community project and is not affiliated with The Indie Stone or Project Zomboid.*
