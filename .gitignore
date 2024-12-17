@@ -1,0 +1,43 @@
+# Node/Electron/Vite
+node_modules
+dist
+dist-electron
+release
+out
+.DS_Store
+*.log*
+
+# Vite
+.vite/
+.env
+.env.*
+
+# Python
+__pycache__/
+.venv
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# cx_Freeze
+build/
+dist/
+output/
+!src/renderer/src/lib
+
+

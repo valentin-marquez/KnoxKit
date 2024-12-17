@@ -1,0 +1,33 @@
+{
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "files.autoSave": "off",
+}
