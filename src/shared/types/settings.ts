@@ -1,5 +1,5 @@
 export type ThemeType = "light" | "dark" | "system"
-export type LanguageType = "en" | "es"
+export type LanguageType = "en" | "es" | "it"
 
 export interface AppSettings {
 	theme: ThemeType
