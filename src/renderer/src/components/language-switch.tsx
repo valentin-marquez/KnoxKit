@@ -13,7 +13,8 @@ export default function LanguageSwitcher() {
 
 	const languageNames: Record<string, string> = {
 		en: "English",
-		es: "Español"
+		es: "Español",
+		it: "Italiano"
 	}
 
 	return (

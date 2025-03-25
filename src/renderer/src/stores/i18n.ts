@@ -1,14 +1,16 @@
 import en from "@shared/locales/en/translation.json"
 import es from "@shared/locales/es/translation.json"
+import it from "@shared/locales/it/translation.json"
 import { atom } from "nanostores"
 import { settingsStore } from "./settings-store"
 
 const translations = {
 	en,
-	es
+	es,
+	it
 }
 
-export const availableLanguages = ["en", "es"]
+export const availableLanguages = ["en", "es", "it"]
 
 export type Translations = typeof en
 
