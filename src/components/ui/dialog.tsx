@@ -40,7 +40,7 @@ export function Dialog({ open, onClose, title, description, children, className 
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative w-full max-w-lg rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg",
+          "relative w-full max-w-lg rounded-xl border border-border bg-card p-5 text-card-foreground shadow-2xl",
           className,
         )}
       >

@@ -23,7 +23,7 @@ export function Select({
   return (
     <label
       className={cn(
-        "inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card/60 pl-3 pr-2 text-xs",
+        "inline-flex h-8 items-center gap-2 rounded-lg border border-border bg-card pl-3 pr-2 text-xs transition-colors hover:border-ring/50 focus-within:border-ring",
         className,
       )}
     >

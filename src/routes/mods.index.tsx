@@ -78,7 +78,7 @@ function ModsRoute() {
             size={15}
             className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
-          <Input placeholder={t("common.search")} className="h-8 rounded pl-8" disabled />
+          <Input placeholder={t("common.search")} className="h-8 rounded-lg pl-8" disabled />
         </div>
       </div>
 

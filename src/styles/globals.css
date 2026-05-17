@@ -38,7 +38,8 @@
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 12%;
 
-  --primary: 24 92% 47%;
+  /* Brand orange (the #E87724/#C45E14 button family) is THE primary. */
+  --primary: 25 84% 44%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 0 0% 93%;
@@ -58,7 +59,7 @@
 
   --border: 0 0% 86%;
   --input: 0 0% 86%;
-  --ring: 24 92% 47%;
+  --ring: 25 84% 44%;
 
   --radius: 0.5rem;
 }
@@ -75,9 +76,9 @@
   --popover: 0 0% 11%;
   --popover-foreground: 0 0% 92%;
 
-  /* the one accent */
-  --primary: 24 95% 55%;
-  --primary-foreground: 0 0% 8%;
+  /* the one accent — brand orange (button family) */
+  --primary: 25 84% 50%;
+  --primary-foreground: 0 0% 100%;
 
   --secondary: 0 0% 20%;
   --secondary-foreground: 0 0% 90%;
@@ -96,7 +97,7 @@
 
   --border: 0 0% 24%;
   --input: 0 0% 26%;
-  --ring: 24 95% 55%;
+  --ring: 25 84% 50%;
 }
 
 @theme inline {

@@ -51,7 +51,7 @@ function SettingsRoute() {
               <div className="flex w-full max-w-sm gap-2">
                 <Input
                   defaultValue="tools/steamcmd/steamcmd.exe"
-                  className="h-8 rounded font-mono text-xs"
+                  className="h-8 rounded-lg font-mono text-xs"
                 />
                 <Button variant="outline" size="sm">
                   {t("settings.browse")}
@@ -62,7 +62,7 @@ function SettingsRoute() {
               <div className="flex w-full max-w-sm gap-2">
                 <Input
                   placeholder="C:\\…\\steamapps\\common\\ProjectZomboid"
-                  className="h-8 rounded font-mono text-xs"
+                  className="h-8 rounded-lg font-mono text-xs"
                 />
                 <Button variant="outline" size="sm">
                   {t("settings.browse")}
@@ -72,7 +72,7 @@ function SettingsRoute() {
             <Row label={t("settings.defaultArgs")}>
               <Input
                 defaultValue="-Xms2g -Xmx4g"
-                className="h-8 max-w-sm rounded font-mono text-xs"
+                className="h-8 max-w-sm rounded-lg font-mono text-xs"
               />
             </Row>
           </Section>

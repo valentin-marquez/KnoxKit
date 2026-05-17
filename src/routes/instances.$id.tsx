@@ -123,7 +123,7 @@ function ContentTab({ id }: { id: string }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("instance.searchContent")}
-            className="h-8 rounded pl-8"
+            className="h-8 rounded-lg pl-8"
           />
         </div>
         <Segmented

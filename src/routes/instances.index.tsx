@@ -79,7 +79,7 @@ function LibraryRoute() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("library.searchPlaceholder")}
-            className="h-8 rounded pl-8"
+            className="h-8 rounded-lg pl-8"
           />
         </div>
         <Select
