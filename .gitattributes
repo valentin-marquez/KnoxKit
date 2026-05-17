@@ -1,0 +1,25 @@
+# Normalize line endings; let git decide text vs binary by default.
+* text=auto eol=lf
+
+# Generated lockfile — collapse in diffs and reviews.
+bun.lock linguist-generated=true
+
+# Force LF for source and config files.
+*.sh   text eol=lf
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.rs   text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+
+# Windows-only scripts must keep CRLF.
+*.ps1 text eol=crlf
+
+# Binary reference assets.
+*.ttf binary
+*.png binary
+*.PNG binary
+*.ico binary
+*.icns binary

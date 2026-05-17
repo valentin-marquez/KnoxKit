@@ -1,0 +1,15 @@
+# mise tool versions for KnoxKit.
+#
+# No-Node decision: the frontend toolchain (Vite, Biome, TanStack, Tauri CLI)
+# runs entirely under Bun, so a Node.js runtime is intentionally NOT pinned
+# here to keep the dev environment lean. Documented fallback: if a transitive
+# tool ever requires Node, install it via `mise use node@22` (LTS) locally —
+# it is a supported escape hatch, not a project dependency.
+
+[tools]
+rust = "1.95.0"
+bun = "1.3.7"
+
+[settings]
+# Use the stable Rust channel for the pinned toolchain.
+rust.channel = "stable"

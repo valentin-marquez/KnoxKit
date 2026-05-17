@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+src-tauri/target/
+
+# Local dev sentinel (scripts/dev.ps1 cargo-fetch marker)
+src-tauri/.knoxkit-cargo-fetched
+
+# SteamCMD and downloaded tooling lands here (Agent D's install script)
+tools/
+
+# Logs
+*.log
+.bun/
+bun-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+
+# NOTE: root-level reference assets (*.ttf, *.png) are intentionally NOT
+# ignored — they are tracked design references kept by the maintainer.
