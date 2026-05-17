@@ -25,6 +25,15 @@
   font-weight: 100 800;
   font-display: swap;
 }
+/* Horror accent — VERY punctual use only (splash, easter eggs,
+   catastrophic errors). NEVER in operational UI. Kept available via the
+   `font-horror` utility; intentionally unused in the app right now. */
+@font-face {
+  font-family: "Special Elite";
+  src: url("/fonts/SpecialElite.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
 
 /* Neutral grays (0 saturation). Light kept usable; dark is the product.
    Base dark = #212121. Orange is an accent only. */
@@ -130,6 +139,7 @@
   --font-sans: Inter, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", Inter, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-horror: "Special Elite", "JetBrains Mono", monospace;
 }
 
 @layer base {
