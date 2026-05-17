@@ -181,10 +181,10 @@ function ModItem({ mod, last }: { mod: Mod; last: boolean }) {
       <Toggle checked={enabled} onChange={setEnabled} label={mod.name} />
       <button
         type="button"
-        aria-label="Más"
-        className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+        aria-label="Más opciones"
+        className="ml-1 grid h-8 w-8 shrink-0 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
       >
-        <Dots size={16} />
+        <Dots size={18} />
       </button>
     </div>
   );

@@ -51,7 +51,7 @@ export const Sun = wrap(SunPh);
 export const Moon = wrap(MoonPh);
 export const Monitor = wrap(MonitorPh);
 export const Plus = wrap(PlusPh, "bold");
-export const Dots = wrap(DotsThreeVertical);
+export const Dots = wrap(DotsThreeVertical, "bold");
 export const Refresh = wrap(ArrowClockwise, "bold");
 
 export const Star = ({ size = 18, className, filled }: IconProps & { filled?: boolean }) => (

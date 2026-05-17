@@ -169,6 +169,25 @@
     user-select: text;
   }
 
+  /* Interactive elements read as clickable. (Native buttons don't get
+     a pointer cursor by default, and Preflight doesn't add one.) */
+  button:not(:disabled),
+  a[href],
+  a[role="button"],
+  [role="switch"]:not(:disabled),
+  [role="tab"],
+  select,
+  summary,
+  label:has(> * select),
+  label:has(select) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="switch"]:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 1px;
@@ -221,37 +240,22 @@
     transform: translateY(1px);
   }
 
+  /* Flat: solid fill, no gradient/highlight/glow. Squircle + a subtle
+     hover/press shift only. */
   .btn-primary {
     color: hsl(var(--primary-foreground));
-    background-image: linear-gradient(
-      180deg,
-      color-mix(in oklab, hsl(var(--primary)) 82%, white),
-      hsl(var(--primary))
-    );
-    box-shadow:
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.28),
-      inset 0 -1px 0 0 hsl(0 0% 0% / 0.16),
-      0 4px 12px -4px hsl(var(--primary) / 0.55);
+    background-color: hsl(var(--primary));
   }
   .btn-primary:hover {
-    background-image: none;
-    background-color: color-mix(in oklab, hsl(var(--primary)) 92%, white);
-    box-shadow:
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.22),
-      0 6px 16px -4px hsl(var(--primary) / 0.6);
+    background-color: color-mix(in oklab, hsl(var(--primary)) 90%, white);
   }
   .btn-primary:active {
-    box-shadow:
-      inset 0 1px 2px 0 hsl(0 0% 0% / 0.25),
-      0 2px 6px -3px hsl(var(--primary) / 0.5);
+    background-color: color-mix(in oklab, hsl(var(--primary)) 88%, black);
   }
 
   .btn-secondary {
     color: hsl(var(--secondary-foreground));
     background-color: hsl(var(--secondary));
-    box-shadow:
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.06),
-      0 1px 2px 0 hsl(0 0% 0% / 0.25);
   }
   .btn-secondary:hover {
     background-color: hsl(var(--accent));
@@ -276,18 +280,10 @@
 
   .btn-destructive {
     color: hsl(var(--destructive-foreground));
-    background-image: linear-gradient(
-      180deg,
-      color-mix(in oklab, hsl(var(--destructive)) 82%, white),
-      hsl(var(--destructive))
-    );
-    box-shadow:
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.22),
-      0 4px 12px -4px hsl(var(--destructive) / 0.5);
+    background-color: hsl(var(--destructive));
   }
   .btn-destructive:hover {
-    background-image: none;
-    background-color: hsl(var(--destructive));
+    background-color: color-mix(in oklab, hsl(var(--destructive)) 90%, white);
   }
 
   /* Tactile switch — pill track, raised white knob with its own drop
