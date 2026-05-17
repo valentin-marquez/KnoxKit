@@ -33,8 +33,8 @@ yarn-error.log*
 Thumbs.db
 *.swp
 
-# NOTE: root-level reference assets (*.ttf, *.png) are intentionally NOT
-# ignored — they are tracked design references kept by the maintainer.
+# Brand/UI assets live under public/ (fonts in public/fonts, spiffouse
+# mascot at public/spiffouse.png) — not loose in the repo root.
 
 # Playwright MCP verification artifacts
 .playwright-mcp/
