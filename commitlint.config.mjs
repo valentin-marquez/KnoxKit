@@ -5,8 +5,10 @@
  * commit ranges. The human-readable rationale and good/bad examples live in
  * `docs/conventions.md` — keep the two in sync.
  *
- * CommonJS (`module.exports`) is intentional: it is the most universally
- * supported form for commitlint regardless of how the loader resolves it.
+ * ESM (`export default`) is required: the root `package.json` sets
+ * `"type": "module"`, so a `.js` config using `module.exports` fails to
+ * load. This file uses the `.mjs` extension + `export default` so
+ * commitlint's cosmiconfig loader resolves it correctly under bun/node.
  *
  * Spec: Conventional Commits 1.0.0 — <type>(<scope>): <subject>
  *   - one scope only (multi-scope means the commit is too big — split it)
@@ -16,7 +18,7 @@
  *   - footer (optional): `BREAKING CHANGE:` / `Refs: #123`
  *   - breaking changes also add `!` (e.g. `feat(modpack)!: ...`)
  */
-module.exports = {
+export default {
   extends: ["@commitlint/config-conventional"],
   rules: {
     // Allowed commit types (lowercase). Anything else is rejected.

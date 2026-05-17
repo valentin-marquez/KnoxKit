@@ -93,7 +93,7 @@ use crate::domain::instance::Id as InstanceId;
 
 ## Part 2 — Conventional Commits (strict, 1.0)
 
-Enforced by `commitlint.config.js` in CI (the `commitlint` job, PR only).
+Enforced by `commitlint.config.mjs` in CI (the `commitlint` job, PR only).
 
 ### Format
 
