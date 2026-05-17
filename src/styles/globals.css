@@ -240,17 +240,26 @@
     transform: translateY(1px);
   }
 
-  /* Flat: solid fill, no gradient/highlight/glow. Squircle + a subtle
-     hover/press shift only. */
+  /* Brand button: gradient border (#F3883B top -> #A84A05 bottom) over a
+     gradient fill that flattens to a solid on hover. No shadow/glow.
+     Two-layer background-clip = crisp gradient stroke. Same in both
+     themes. */
   .btn-primary {
-    color: hsl(var(--primary-foreground));
-    background-color: hsl(var(--primary));
+    color: #fff;
+    border: 1px solid transparent;
+    background:
+      linear-gradient(180deg, #e87724, #c45e14) padding-box,
+      linear-gradient(180deg, #f3883b, #a84a05) border-box;
   }
   .btn-primary:hover {
-    background-color: color-mix(in oklab, hsl(var(--primary)) 90%, white);
+    background:
+      #c15c13 padding-box,
+      linear-gradient(180deg, #f3883b, #a84a05) border-box;
   }
   .btn-primary:active {
-    background-color: color-mix(in oklab, hsl(var(--primary)) 88%, black);
+    background:
+      #a84a05 padding-box,
+      linear-gradient(180deg, #f3883b, #a84a05) border-box;
   }
 
   .btn-secondary {
