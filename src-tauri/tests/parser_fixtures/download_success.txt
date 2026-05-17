@@ -1,0 +1,20 @@
+Redirecting stderr to 'C:\steamcmd\logs\stderr.txt'
+Logging directory: 'C:\steamcmd\logs'
+[  0%] Checking for available updates...
+[----] Verifying installation...
+Steam Console Client (c) Valve Corporation - version 1717360273
+-- type 'quit' to exit --
+Loading Steam API...OK
+Connecting anonymously to Steam Public...
+Waiting for user info...OK
+Logged in OK
+Waiting for client config...OK
+Waiting for user info...OK
+Downloading item 2392709985 ...
+ Update state (0x3) reconfiguring, progress: 0.00 (0 / 0)
+ Update state (0x61) downloading, progress: 12.34 (1234567 / 10000000)
+ Update state (0x61) downloading, progress: 42.13 (4213000 / 10000000)
+ Update state (0x61) downloading, progress: 87.90 (8790000 / 10000000)
+ Update state (0x81) committing, progress: 100.00 (10000000 / 10000000)
+Success. Downloaded item 2392709985 to "C:\steamcmd\steamapps\workshop\content\108600\2392709985" (10000000 bytes)
+Steam>quit

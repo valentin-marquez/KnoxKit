@@ -1,0 +1,9 @@
+
+
+random noise that is not a steamcmd line
+%%%% not a progress line %%%%
+Downloading item notanumber ...
+ Update state (0x61) downloading, progress: notapercent (0 / 0)
+Success. Downloaded item  to "" ()
+ERROR! something unrelated happened
+;;;;

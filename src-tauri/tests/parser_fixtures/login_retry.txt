@@ -1,0 +1,8 @@
+Steam Console Client (c) Valve Corporation - version 1717360273
+-- type 'quit' to exit --
+Loading Steam API...OK
+Connecting anonymously to Steam Public...
+Waiting for user info...FAILED login with result code Rate Limit Exceeded
+Waiting for user info...OK
+Logged in OK
+Steam>quit

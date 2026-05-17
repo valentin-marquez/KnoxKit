@@ -1,0 +1,6 @@
+//! Instance management service (disk-backed persistence).
+//!
+//! keep names path-relative — see docs/conventions.md
+//! Callers write `instances::disk::list`, etc.
+
+pub mod disk;
