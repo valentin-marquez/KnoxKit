@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>KnoxKit</title>
+    <script>
+      // Apply persisted theme before first paint to avoid a white flash.
+      (() => {
+        try {
+          const stored = localStorage.getItem("knoxkit.theme");
+          const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          const dark = stored === "dark" || (stored !== "light" && prefersDark);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch {
+          /* localStorage unavailable; theme-provider will reconcile */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

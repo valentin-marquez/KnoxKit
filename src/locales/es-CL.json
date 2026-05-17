@@ -1,0 +1,43 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "instances": "Instancias",
+    "mods": "Mods",
+    "settings": "Ajustes"
+  },
+  "common": {
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "import": "Importar",
+    "export": "Exportar",
+    "delete": "Eliminar"
+  },
+  "route": {
+    "dashboard": {
+      "title": "Panel"
+    },
+    "instances": {
+      "title": "Instancias"
+    },
+    "mods": {
+      "title": "Mods"
+    },
+    "settings": {
+      "title": "Ajustes"
+    }
+  },
+  "modpack": {
+    "import": {
+      "title": "Importar modpack",
+      "workshopItems": "Ítems del Workshop",
+      "loadOrder": "Orden de carga",
+      "required": "Obligatorio",
+      "button": "Importar modpack"
+    }
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "instances": "Instances",
+    "mods": "Mods",
+    "settings": "Settings"
+  },
+  "common": {
+    "create": "Create",
+    "cancel": "Cancel",
+    "import": "Import",
+    "export": "Export",
+    "delete": "Delete"
+  },
+  "route": {
+    "dashboard": {
+      "title": "Dashboard"
+    },
+    "instances": {
+      "title": "Instances"
+    },
+    "mods": {
+      "title": "Mods"
+    },
+    "settings": {
+      "title": "Settings"
+    }
+  },
+  "modpack": {
+    "import": {
+      "title": "Import modpack",
+      "workshopItems": "Workshop items",
+      "loadOrder": "Load order",
+      "required": "Required",
+      "button": "Import modpack"
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  }
+}
