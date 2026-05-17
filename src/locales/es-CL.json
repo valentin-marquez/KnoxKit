@@ -33,7 +33,12 @@
     "sortBy": "Ordenar por",
     "groupBy": "Agrupar por",
     "sort": { "name": "Nombre", "played": "Última vez jugada", "created": "Fecha de creación" },
-    "group": { "none": "Ninguno", "build": "Build del juego", "tag": "Tipo" },
+    "group": {
+      "none": "Ninguno",
+      "build": "Build del juego",
+      "tag": "Tipo",
+      "custom": "Personalizadas"
+    },
     "filter": {
       "all": "Todas",
       "modpacks": "Modpacks",
@@ -43,8 +48,12 @@
     "count": "{{count}} instancia",
     "count_other": "{{count}} instancias",
     "play": "Jugar",
+    "results": "{{count}} de {{total}}",
     "emptyTitle": "Aún no hay instancias",
-    "emptyLog": "// sin sobrevivientes registrados. crea tu primera instancia pa' partir.",
+    "emptyHint": "Crea tu primera instancia pa' partir.",
+    "noResults": "Sin resultados",
+    "noResultsHint": "Ninguna instancia coincide con el filtro o la búsqueda.",
+    "clearFilters": "Limpiar filtros",
     "modCount": "{{count}} mod",
     "modCount_other": "{{count}} mods",
     "hours": "{{count}}h jugadas"

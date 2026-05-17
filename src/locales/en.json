@@ -33,7 +33,7 @@
     "sortBy": "Sort by",
     "groupBy": "Group by",
     "sort": { "name": "Name", "played": "Last played", "created": "Date created" },
-    "group": { "none": "None", "build": "Game build", "tag": "Type" },
+    "group": { "none": "None", "build": "Game build", "tag": "Type", "custom": "Custom" },
     "filter": {
       "all": "All",
       "modpacks": "Modpacks",
@@ -43,8 +43,12 @@
     "count": "{{count}} instance",
     "count_other": "{{count}} instances",
     "play": "Play",
+    "results": "{{count}} of {{total}}",
     "emptyTitle": "No instances yet",
-    "emptyLog": "// no survivors logged. create your first instance to begin.",
+    "emptyHint": "Create your first instance to get started.",
+    "noResults": "No matches",
+    "noResultsHint": "No instance matches the current filter or search.",
+    "clearFilters": "Clear filters",
     "modCount": "{{count}} mod",
     "modCount_other": "{{count}} mods",
     "hours": "{{count}}h played"
