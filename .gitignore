@@ -9,6 +9,9 @@ src-tauri/target/
 # Local dev sentinel (scripts/dev.ps1 cargo-fetch marker)
 src-tauri/.knoxkit-cargo-fetched
 
+# Tauri-generated ACL / capability schemas (regenerated every build)
+src-tauri/gen/
+
 # SteamCMD and downloaded tooling lands here (Agent D's install script)
 tools/
 
