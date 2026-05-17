@@ -18,7 +18,7 @@ export function InstanceTile({ name, className }: { name: string; className?: st
   return (
     <div
       className={cn(
-        "grid shrink-0 place-items-center rounded-md border border-border bg-secondary text-secondary-foreground",
+        "grid shrink-0 place-items-center rounded-[0.6rem] border border-border bg-secondary text-secondary-foreground",
         className,
       )}
       aria-hidden="true"

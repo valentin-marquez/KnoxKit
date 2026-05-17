@@ -21,14 +21,18 @@ export function InstanceCard({ data }: { data: Data }) {
       to="/instances/$id"
       params={{ id: data.id }}
       className={cn(
-        "group flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2.5",
-        "transition-colors hover:border-primary/70 hover:bg-accent/30",
+        "group flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5",
+        "transition-[background-color,border-color,box-shadow] duration-150",
+        "hover:border-primary/60 hover:bg-accent/25",
+        "hover:shadow-[0_4px_14px_-6px_hsl(0_0%_0%/0.5)]",
       )}
     >
       <div className="relative">
         <InstanceTile name={data.name} className="h-12 w-12" />
-        <span className="absolute inset-0 grid place-items-center rounded-md bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-          <Play size={18} className="text-primary" />
+        <span className="absolute inset-0 grid place-items-center rounded-[0.6rem] bg-black/55 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_2px_6px_-1px_hsl(0_0%_0%/0.5)]">
+            <Play size={15} />
+          </span>
         </span>
       </div>
 

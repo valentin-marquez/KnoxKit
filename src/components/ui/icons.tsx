@@ -31,7 +31,7 @@ interface IconProps {
 
 type Weight = "regular" | "bold" | "fill";
 
-function wrap(C: PhosphorIcon, weight: Weight = "regular") {
+function wrap(C: PhosphorIcon, weight: Weight = "fill") {
   return ({ size = 18, className }: IconProps) => (
     <C size={size} className={className} weight={weight} />
   );
@@ -41,9 +41,9 @@ export const Grid = wrap(GridFour);
 export const Box = wrap(Package);
 export const Download = wrap(DownloadSimple);
 export const Gear = wrap(GearSix);
-export const Play = wrap(PlayPh, "fill");
+export const Play = wrap(PlayPh);
 export const Folder = wrap(FolderOpen);
-export const Search = wrap(MagnifyingGlass);
+export const Search = wrap(MagnifyingGlass, "bold");
 export const ChevronLeft = wrap(CaretLeft, "bold");
 export const ChevronRight = wrap(CaretRight, "bold");
 export const ChevronDown = wrap(CaretDown, "bold");
@@ -51,9 +51,9 @@ export const Sun = wrap(SunPh);
 export const Moon = wrap(MoonPh);
 export const Monitor = wrap(MonitorPh);
 export const Plus = wrap(PlusPh, "bold");
-export const Dots = wrap(DotsThreeVertical, "bold");
-export const Refresh = wrap(ArrowClockwise);
+export const Dots = wrap(DotsThreeVertical);
+export const Refresh = wrap(ArrowClockwise, "bold");
 
 export const Star = ({ size = 18, className, filled }: IconProps & { filled?: boolean }) => (
-  <StarPh size={size} className={className} weight={filled ? "fill" : "regular"} />
+  <StarPh size={size} className={className} weight={filled ? "fill" : "bold"} />
 );

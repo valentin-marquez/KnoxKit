@@ -193,3 +193,141 @@
     background-clip: content-box;
   }
 }
+
+@layer components {
+  /* Tactile squircle button. Default = soft top-lit gradient + colored
+     drop shadow; hover flattens to a solid; press sinks. Adapts to the
+     theme via --primary. (Gradient/shadow live on the control, never the
+     page.) */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+      background-color 150ms ease-out,
+      box-shadow 150ms ease-out,
+      transform 100ms ease-out,
+      opacity 150ms ease-out;
+  }
+  .btn:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    color: hsl(var(--primary-foreground));
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, hsl(var(--primary)) 82%, white),
+      hsl(var(--primary))
+    );
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.28),
+      inset 0 -1px 0 0 hsl(0 0% 0% / 0.16),
+      0 4px 12px -4px hsl(var(--primary) / 0.55);
+  }
+  .btn-primary:hover {
+    background-image: none;
+    background-color: color-mix(in oklab, hsl(var(--primary)) 92%, white);
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.22),
+      0 6px 16px -4px hsl(var(--primary) / 0.6);
+  }
+  .btn-primary:active {
+    box-shadow:
+      inset 0 1px 2px 0 hsl(0 0% 0% / 0.25),
+      0 2px 6px -3px hsl(var(--primary) / 0.5);
+  }
+
+  .btn-secondary {
+    color: hsl(var(--secondary-foreground));
+    background-color: hsl(var(--secondary));
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06),
+      0 1px 2px 0 hsl(0 0% 0% / 0.25);
+  }
+  .btn-secondary:hover {
+    background-color: hsl(var(--accent));
+  }
+
+  .btn-outline {
+    color: hsl(var(--foreground));
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px hsl(var(--border));
+  }
+  .btn-outline:hover {
+    background-color: hsl(var(--accent));
+  }
+
+  .btn-ghost {
+    color: hsl(var(--foreground));
+    background-color: transparent;
+  }
+  .btn-ghost:hover {
+    background-color: hsl(var(--accent));
+  }
+
+  .btn-destructive {
+    color: hsl(var(--destructive-foreground));
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, hsl(var(--destructive)) 82%, white),
+      hsl(var(--destructive))
+    );
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.22),
+      0 4px 12px -4px hsl(var(--destructive) / 0.5);
+  }
+  .btn-destructive:hover {
+    background-image: none;
+    background-color: hsl(var(--destructive));
+  }
+
+  /* Tactile switch — pill track, raised white knob with its own drop
+     shadow, knob a touch taller than the track. */
+  .switch {
+    position: relative;
+    display: inline-flex;
+    height: 1.25rem;
+    width: 2.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    border-radius: 9999px;
+    background-color: hsl(var(--muted));
+    box-shadow: inset 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+    transition: background-color 150ms ease-out;
+  }
+  .switch[data-on="true"] {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, hsl(var(--primary)) 85%, white),
+      hsl(var(--primary))
+    );
+  }
+  .switch:disabled {
+    pointer-events: none;
+    opacity: 0.45;
+  }
+  .switch-knob {
+    position: absolute;
+    left: 2px;
+    height: 1.125rem;
+    width: 1.125rem;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #fff, #e9e9e9);
+    box-shadow:
+      0 1px 1px 0 hsl(0 0% 0% / 0.15),
+      0 2px 5px -1px hsl(0 0% 0% / 0.45);
+    transition: transform 150ms ease-out;
+  }
+  .switch[data-on="true"] .switch-knob {
+    transform: translateX(1rem);
+  }
+}
