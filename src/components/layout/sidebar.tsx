@@ -22,34 +22,38 @@ export function Sidebar() {
   const { t } = useTranslation();
 
   return (
-    <aside className="relative z-10 flex h-full w-[68px] flex-col items-center border-r border-border bg-card/60 py-4 backdrop-blur">
-      <Link to="/instances" aria-label="KnoxKit">
+    <aside className="flex h-full w-14 flex-col items-center border-r border-border bg-card">
+      <Link
+        to="/instances"
+        aria-label="KnoxKit"
+        className="grid h-14 w-14 place-items-center border-b border-border"
+      >
         <Brand compact />
       </Link>
 
-      <nav className="mt-7 flex flex-1 flex-col items-center gap-1.5">
+      <nav className="flex flex-1 flex-col items-center gap-1 py-2">
         {ITEMS.map(({ to, labelKey, Icon }) => (
           <Link
             key={to}
             to={to}
-            className="group relative grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            activeProps={{ className: "is-active bg-primary/15 text-primary" }}
+            className="group relative grid h-10 w-10 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            activeProps={{ className: "is-active bg-accent text-primary" }}
           >
-            <span className="absolute left-0 h-0 w-[3px] rounded-r-full bg-primary transition-all duration-200 group-[.is-active]:h-6" />
-            <Icon size={20} />
-            <span className="pointer-events-none absolute left-[120%] z-50 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+            <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-primary group-[.is-active]:h-5" />
+            <Icon size={19} />
+            <span className="pointer-events-none absolute left-[115%] z-50 whitespace-nowrap rounded border border-border bg-popover px-2 py-1 text-xs font-medium text-popover-foreground opacity-0 shadow-md group-hover:opacity-100">
               {t(labelKey)}
             </span>
           </Link>
         ))}
       </nav>
 
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-1 border-t border-border py-2">
         <ThemeToggle />
         <button
           type="button"
           aria-label="Perfil"
-          className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground ring-1 ring-border transition-colors hover:bg-accent"
+          className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground hover:bg-accent"
         >
           V
         </button>

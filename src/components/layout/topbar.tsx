@@ -18,42 +18,40 @@ export function Topbar() {
   const running = runningCount > 0;
 
   return (
-    <header className="relative z-10 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/40 px-4 backdrop-blur">
-      <div className="flex items-center gap-1">
-        <div className="mr-1 flex items-center">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-card pl-2 pr-3">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <button
             type="button"
             onClick={() => router.history.back()}
             aria-label="Atrás"
-            className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
           <button
             type="button"
             onClick={() => router.history.forward()}
             aria-label="Adelante"
-            className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
-        <nav className="flex items-center gap-1.5 text-sm">
+        <nav className="flex items-center gap-1.5 text-[13px]">
           {crumbs.map((c, i) => (
             <span key={c.label} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-muted-foreground/50">/</span>}
+              {i > 0 && <span className="text-border">/</span>}
               {c.to && i < crumbs.length - 1 ? (
-                <Link
-                  to={c.to}
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
+                <Link to={c.to} className="text-muted-foreground hover:text-foreground">
                   {c.label}
                 </Link>
               ) : (
                 <span
                   className={cn(
-                    i === 0 ? "font-display font-semibold" : "font-medium",
-                    i === crumbs.length - 1 ? "text-foreground" : "text-muted-foreground",
+                    i === crumbs.length - 1
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground",
                   )}
                 >
                   {c.label}
@@ -64,21 +62,14 @@ export function Topbar() {
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1.5">
-        <span className="relative flex h-2 w-2">
-          {running && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            running ? "bg-success" : "bg-muted-foreground/40",
           )}
-          <span
-            className={cn(
-              "relative inline-flex h-2 w-2 rounded-full",
-              running ? "bg-primary" : "bg-muted-foreground/40",
-            )}
-          />
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {running ? t("topbar.running", { count: runningCount }) : t("topbar.none")}
-        </span>
+        />
+        {running ? t("topbar.running", { count: runningCount }) : t("topbar.none")}
       </div>
     </header>
   );

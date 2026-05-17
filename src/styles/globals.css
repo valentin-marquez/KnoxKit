@@ -1,14 +1,11 @@
 @import "tailwindcss";
 
-/* Dark mode driven by a `.dark` class on <html> (set by theme-provider and
-   the inline pre-paint script in index.html). KnoxKit is dark-first. */
+/* Dark mode driven by a `.dark` class on <html>. KnoxKit is dark-first.
+   This is a desktop launcher — neutral, dense, utilitarian. Strong
+   contrast: a true-gray base with a single sharp orange accent. No
+   tinted backgrounds, no glow, no decorative atmosphere. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* --- Typeface program ------------------------------------------------------
-   Display : Bricolage Grotesque  — wordmark, headings, section eyebrows
-   Body/UI : Inter                — all interface text
-   Mono    : JetBrains Mono       — versions, ids, counts, paths
-   Accent  : Special Elite        — the "survivor's log" voice (sparse)        */
 @font-face {
   font-family: "Bricolage Grotesque";
   src: url("/fonts/BricolageGrotesque.ttf") format("truetype");
@@ -23,93 +20,83 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "Inter";
-  src: url("/fonts/Inter-Italic.ttf") format("truetype");
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
   font-family: "JetBrains Mono";
   src: url("/fonts/JetBrainsMono.ttf") format("truetype");
   font-weight: 100 800;
   font-display: swap;
 }
-@font-face {
-  font-family: "Special Elite";
-  src: url("/fonts/SpecialElite.ttf") format("truetype");
-  font-weight: 400;
-  font-display: swap;
-}
 
-/* Design tokens. HSL channels so Tailwind utilities can apply opacity via
-   `hsl(var(--token) / <a>)`. Light = warm paper; dark = survival console. */
+/* Neutral grays (0 saturation). Light kept usable; dark is the product.
+   Base dark = #212121. Orange is an accent only. */
 :root {
-  --background: 30 28% 96%;
-  --foreground: 20 14% 12%;
+  --background: 0 0% 96%;
+  --foreground: 0 0% 12%;
 
   --card: 0 0% 100%;
-  --card-foreground: 20 14% 12%;
+  --card-foreground: 0 0% 12%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 20 14% 12%;
+  --popover-foreground: 0 0% 12%;
 
-  --primary: 22 90% 46%;
+  --primary: 24 92% 47%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 28 22% 91%;
-  --secondary-foreground: 20 14% 20%;
+  --secondary: 0 0% 93%;
+  --secondary-foreground: 0 0% 18%;
 
-  --muted: 28 18% 91%;
-  --muted-foreground: 24 8% 40%;
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 42%;
 
-  --accent: 28 24% 88%;
-  --accent-foreground: 20 14% 18%;
+  --accent: 0 0% 90%;
+  --accent-foreground: 0 0% 14%;
 
   --destructive: 0 70% 47%;
   --destructive-foreground: 0 0% 100%;
 
-  --success: 130 44% 36%;
-  --warning: 36 88% 44%;
+  --success: 142 55% 38%;
+  --warning: 36 90% 44%;
 
-  --border: 28 16% 83%;
-  --input: 28 16% 83%;
-  --ring: 22 90% 46%;
+  --border: 0 0% 86%;
+  --input: 0 0% 86%;
+  --ring: 24 92% 47%;
 
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 }
 
 .dark {
-  --background: 20 14% 7%;
-  --foreground: 30 12% 90%;
+  /* #212121 base */
+  --background: 0 0% 13%;
+  --foreground: 0 0% 92%;
 
-  --card: 22 12% 11%;
-  --card-foreground: 30 12% 90%;
+  /* surfaces sit just above the base, neutral */
+  --card: 0 0% 16%;
+  --card-foreground: 0 0% 92%;
 
-  --popover: 22 13% 10%;
-  --popover-foreground: 30 12% 90%;
+  --popover: 0 0% 11%;
+  --popover-foreground: 0 0% 92%;
 
-  --primary: 22 92% 53%;
-  --primary-foreground: 24 35% 7%;
+  /* the one accent */
+  --primary: 24 95% 55%;
+  --primary-foreground: 0 0% 8%;
 
-  --secondary: 22 12% 17%;
-  --secondary-foreground: 30 10% 87%;
+  --secondary: 0 0% 20%;
+  --secondary-foreground: 0 0% 90%;
 
-  --muted: 20 10% 15%;
-  --muted-foreground: 28 7% 57%;
+  --muted: 0 0% 19%;
+  --muted-foreground: 0 0% 58%;
 
-  --accent: 22 16% 20%;
-  --accent-foreground: 30 12% 92%;
+  --accent: 0 0% 24%;
+  --accent-foreground: 0 0% 96%;
 
-  --destructive: 0 65% 51%;
+  --destructive: 0 68% 52%;
   --destructive-foreground: 0 0% 100%;
 
-  --success: 132 46% 47%;
+  --success: 142 52% 50%;
   --warning: 38 92% 56%;
 
-  --border: 24 10% 18%;
-  --input: 24 10% 18%;
-  --ring: 22 92% 53%;
+  --border: 0 0% 24%;
+  --input: 0 0% 26%;
+  --ring: 24 95% 55%;
 }
 
 @theme inline {
@@ -136,13 +123,12 @@
   --color-ring: hsl(var(--ring));
 
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 3px);
-  --radius-sm: calc(var(--radius) - 5px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 
   --font-sans: Inter, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", Inter, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-typewriter: "Special Elite", "JetBrains Mono", monospace;
 }
 
 @layer base {
@@ -161,28 +147,40 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
-    font-feature-settings: "cv11", "ss01";
+    font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+  }
+
+  /* App, not document: short, snappy interaction transitions only —
+     no entrance/load animation. */
+  button,
+  a,
+  input,
+  [role="switch"],
+  [role="tab"] {
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  input,
+  textarea {
+    user-select: text;
   }
 
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
+    outline-offset: 1px;
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.3);
-    color: hsl(var(--foreground));
+    background: hsl(var(--primary) / 0.35);
   }
 
-  /* Slim, themed scrollbars — utilitarian console feel. */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
+    width: 12px;
+    height: 12px;
   }
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
@@ -191,62 +189,7 @@
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.6);
+    background: hsl(0 0% 40%);
     background-clip: content-box;
-  }
-}
-
-@layer utilities {
-  /* Faint film grain + ember vignette for the app shell. Pure CSS, cheap,
-     fixed so it doesn't scroll. Restrained on purpose — Modrinth-clean. */
-  .app-grain::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
-    mix-blend-mode: overlay;
-    opacity: 0.025;
-  }
-  .app-grain::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      120% 90% at 50% -10%,
-      hsl(var(--primary) / 0.07),
-      transparent 55%
-    );
-  }
-
-  .font-display {
-    font-family: var(--font-display);
-  }
-  .font-typewriter {
-    font-family: var(--font-typewriter);
-  }
-
-  /* Staggered entrance for grids/lists. Apply `.rise` + inline
-     `animationDelay`. Honors reduced-motion. */
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .rise {
-    animation: rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .rise {
-      animation: none;
-    }
   }
 }

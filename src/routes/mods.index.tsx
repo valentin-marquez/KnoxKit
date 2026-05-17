@@ -15,7 +15,6 @@ interface Featured {
   blurb: string;
   downloads: string;
   tags: string[];
-  hue: number;
 }
 
 const FEATURED: Featured[] = [
@@ -25,23 +24,20 @@ const FEATURED: Featured[] = [
     blurb: "Cientos de armas balanceadas con animaciones propias.",
     downloads: "1.4M",
     tags: ["Armas", "Balance"],
-    hue: 16,
   },
   {
     id: "2169435993",
     name: "Authentic Z",
     blurb: "Ropa, mochilas y estética de supervivencia realista.",
     downloads: "980K",
-    tags: ["Ropa", "Inmersión"],
-    hue: 30,
+    tags: ["Ropa"],
   },
   {
     id: "2282429356",
     name: "Superb Survivors!",
     blurb: "NPCs con los que reclutar, comerciar o pelear.",
     downloads: "2.1M",
-    tags: ["NPC", "Gameplay"],
-    hue: 8,
+    tags: ["NPC"],
   },
   {
     id: "2459070642",
@@ -49,7 +45,6 @@ const FEATURED: Featured[] = [
     blurb: "Minimapa configurable que respeta el cartografiado.",
     downloads: "1.1M",
     tags: ["UI", "Mapa"],
-    hue: 42,
   },
   {
     id: "1374479835",
@@ -57,7 +52,6 @@ const FEATURED: Featured[] = [
     blurb: "Flota de vehículos nuevos con tuning y partes.",
     downloads: "760K",
     tags: ["Vehículos"],
-    hue: 22,
   },
   {
     id: "2120111017",
@@ -65,7 +59,6 @@ const FEATURED: Featured[] = [
     blurb: "Interacciones lógicas que el vanilla olvidó.",
     downloads: "1.6M",
     tags: ["QoL"],
-    hue: 36,
   },
 ];
 
@@ -73,54 +66,53 @@ function ModsRoute() {
   const { t } = useTranslation();
 
   return (
-    <div className="mx-auto max-w-[1100px] px-7 py-7">
-      <header>
-        <h1 className="font-display text-2xl font-bold tracking-tight">{t("mods.title")}</h1>
-        <p className="mt-1 max-w-xl text-sm text-muted-foreground">{t("mods.subtitle")}</p>
-      </header>
-
-      <div className="relative mt-5 max-w-xl">
-        <Search
-          size={15}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input placeholder={t("common.search")} className="h-10 rounded-lg pl-9" disabled />
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border px-5 py-3">
+        <h1 className="font-display text-lg font-bold">{t("mods.title")}</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("mods.subtitle")}</p>
       </div>
 
-      <h2 className="mb-3 mt-8 font-typewriter text-xs uppercase tracking-widest text-muted-foreground">
-        {t("mods.discover")}
-      </h2>
-      <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(330px,1fr))]">
-        {FEATURED.map((m, i) => (
-          <article
-            key={m.id}
-            className="rise flex gap-3.5 rounded-xl border border-border bg-card p-4"
-            style={{ animationDelay: `${i * 50}ms` }}
-          >
-            <InstanceTile name={m.name} hue={m.hue} className="h-14 w-14 text-2xl" />
-            <div className="min-w-0 flex-1">
-              <h3 className="font-display text-sm font-semibold">{m.name}</h3>
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{m.blurb}</p>
-              <div className="mt-2.5 flex items-center gap-1.5">
-                {m.tags.map((tag) => (
-                  <Badge key={tag} tone="muted">
-                    {tag}
-                  </Badge>
-                ))}
-                <span className="ml-auto flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
-                  <Download size={12} />
-                  {m.downloads}
-                </span>
+      <div className="border-b border-border px-5 py-2.5">
+        <div className="relative max-w-md">
+          <Search
+            size={15}
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input placeholder={t("common.search")} className="h-8 rounded pl-8" disabled />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto p-5">
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("mods.discover")}
+        </h2>
+        <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]">
+          {FEATURED.map((m) => (
+            <article
+              key={m.id}
+              className="flex gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/50"
+            >
+              <InstanceTile name={m.name} className="h-12 w-12" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[13px] font-semibold">{m.name}</h3>
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{m.blurb}</p>
+                <div className="mt-2 flex items-center gap-1.5">
+                  {m.tags.map((tag) => (
+                    <Badge key={tag} tone="muted">
+                      {tag}
+                    </Badge>
+                  ))}
+                  <span className="ml-auto flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                    <Download size={12} />
+                    {m.downloads}
+                  </span>
+                </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">{t("mods.soon")}</p>
       </div>
-
-      <p className="mt-8 text-center font-typewriter text-xs text-muted-foreground">
-        {"// "}
-        {t("mods.soon")}
-      </p>
     </div>
   );
 }

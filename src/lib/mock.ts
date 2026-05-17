@@ -1,7 +1,7 @@
 /**
  * Mock data for the UI shell. No backend wiring yet — these populate the
- * Modrinth-style library and instance views so the interface feels alive.
- * Replace with TanStack Query reading the real commands when wired.
+ * launcher views so the interface feels real. Replace with TanStack Query
+ * reading the real commands when wired.
  */
 
 export type Status = "idle" | "running" | "updating";
@@ -17,8 +17,6 @@ export interface InstanceCard {
   mods: number;
   favorite: boolean;
   lastPlayed: string | null;
-  /** Hue (deg) for the procedural tile — kept warm to stay cohesive. */
-  hue: number;
 }
 
 export interface ModRow {
@@ -41,7 +39,6 @@ export const instances: InstanceCard[] = [
     mods: 38,
     favorite: true,
     lastPlayed: "hace 2 horas",
-    hue: 18,
   },
   {
     id: "b2c4-los-compadres",
@@ -53,7 +50,6 @@ export const instances: InstanceCard[] = [
     mods: 24,
     favorite: true,
     lastPlayed: "ayer",
-    hue: 6,
   },
   {
     id: "c3d5-sandbox-tranqui",
@@ -65,7 +61,6 @@ export const instances: InstanceCard[] = [
     mods: 9,
     favorite: false,
     lastPlayed: "hace 4 días",
-    hue: 38,
   },
   {
     id: "d4e6-knox-county-rp",
@@ -77,7 +72,6 @@ export const instances: InstanceCard[] = [
     mods: 56,
     favorite: false,
     lastPlayed: "hace 1 semana",
-    hue: 28,
   },
   {
     id: "e5f7-build42-test",
@@ -89,7 +83,6 @@ export const instances: InstanceCard[] = [
     mods: 2,
     favorite: false,
     lastPlayed: "hace 12 días",
-    hue: 46,
   },
   {
     id: "f6a8-vanilla-plus",
@@ -101,7 +94,6 @@ export const instances: InstanceCard[] = [
     mods: 14,
     favorite: false,
     lastPlayed: null,
-    hue: 12,
   },
 ];
 

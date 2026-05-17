@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ImportPreview } from "@/components/modpack/import-preview";
 import { Button } from "@/components/ui/button";
 import { Download } from "@/components/ui/icons";
+
 import { validateModpack } from "@/lib/tauri/commands";
 
 interface ImportSearch {
@@ -20,11 +21,13 @@ export const Route = createFileRoute("/modpack/import")({
 function Shell({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   return (
-    <div className="mx-auto max-w-3xl px-7 py-7">
-      <h1 className="font-display text-2xl font-bold tracking-tight">
-        {t("modpack.import.title")}
-      </h1>
-      <div className="mt-6">{children}</div>
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border px-5 py-3">
+        <h1 className="font-display text-lg font-bold">{t("modpack.import.title")}</h1>
+      </div>
+      <div className="flex-1 overflow-auto p-5">
+        <div className="mx-auto max-w-3xl">{children}</div>
+      </div>
     </div>
   );
 }
@@ -42,13 +45,11 @@ function ModpackImportRoute() {
   if (!file) {
     return (
       <Shell>
-        <div className="grid place-items-center rounded-xl border border-dashed border-border py-20 text-center">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary">
-            <Download size={24} />
+        <div className="grid place-items-center rounded-md border border-dashed border-border py-16 text-center">
+          <div className="grid h-12 w-12 place-items-center rounded-md border border-border text-muted-foreground">
+            <Download size={20} />
           </div>
-          <p className="mt-4 max-w-sm font-typewriter text-sm text-muted-foreground">
-            {t("modpack.import.hint")}
-          </p>
+          <p className="mt-3 max-w-sm text-sm text-muted-foreground">{t("modpack.import.hint")}</p>
         </div>
       </Shell>
     );
@@ -57,10 +58,7 @@ function ModpackImportRoute() {
   if (isLoading) {
     return (
       <Shell>
-        <p className="font-typewriter text-sm text-muted-foreground">
-          {"// "}
-          validando {file}…
-        </p>
+        <p className="text-sm text-muted-foreground">{file}…</p>
       </Shell>
     );
   }
@@ -68,7 +66,7 @@ function ModpackImportRoute() {
   if (isError || !data) {
     return (
       <Shell>
-        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 font-mono text-xs text-destructive">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 font-mono text-xs text-destructive">
           {error instanceof Error ? error.message : "Failed to validate modpack."}
         </div>
       </Shell>
@@ -81,7 +79,7 @@ function ModpackImportRoute() {
       <div className="mt-4 flex justify-end">
         {/* TODO(review): wire import_modpack */}
         <Button disabled className="gap-2">
-          <Download size={16} />
+          <Download size={15} />
           {t("modpack.import.button")}
         </Button>
       </div>

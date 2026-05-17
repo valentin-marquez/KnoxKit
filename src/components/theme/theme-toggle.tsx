@@ -1,19 +1,22 @@
+import type { ComponentType } from "react";
 import { useTranslation } from "react-i18next";
 import { type Theme, useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
+import { Monitor, Moon, Sun } from "@/components/ui/icons";
 
 const ORDER: Theme[] = ["light", "dark", "system"];
 
-const GLYPH: Record<Theme, string> = {
-  light: "☀",
-  dark: "☾",
-  system: "🖥",
+const ICON: Record<Theme, ComponentType<{ size?: number }>> = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
 };
 
 /** Cycles light → dark → system. */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
+  const Icon = ICON[theme];
 
   const next = () => {
     const idx = ORDER.indexOf(theme);
@@ -28,8 +31,9 @@ export function ThemeToggle() {
       onClick={next}
       aria-label={t(`theme.${theme}`)}
       title={t(`theme.${theme}`)}
+      className="h-8 w-8"
     >
-      <span aria-hidden="true">{GLYPH[theme]}</span>
+      <Icon size={17} />
     </Button>
   );
 }

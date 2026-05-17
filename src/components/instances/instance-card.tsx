@@ -2,18 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { InstanceTile } from "@/components/instances/instance-tile";
-import { Badge } from "@/components/ui/badge";
 import { Play, Star } from "@/components/ui/icons";
 import type { InstanceCard as Data } from "@/lib/mock";
 import { cn } from "@/lib/utils";
 
-const STATUS_TONE = {
-  idle: "muted",
-  running: "success",
-  updating: "warning",
-} as const;
+const STATUS_DOT: Record<Data["status"], string> = {
+  idle: "bg-muted-foreground/50",
+  running: "bg-success",
+  updating: "bg-warning",
+};
 
-export function InstanceCard({ data, index = 0 }: { data: Data; index?: number }) {
+export function InstanceCard({ data }: { data: Data }) {
   const { t } = useTranslation();
   const [fav, setFav] = useState(data.favorite);
 
@@ -22,55 +21,45 @@ export function InstanceCard({ data, index = 0 }: { data: Data; index?: number }
       to="/instances/$id"
       params={{ id: data.id }}
       className={cn(
-        "rise group relative flex gap-3.5 rounded-xl border border-border bg-card p-3.5",
-        "transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40",
-        "hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]",
+        "group flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2.5",
+        "transition-colors hover:border-primary/70 hover:bg-accent/30",
       )}
-      style={{ animationDelay: `${Math.min(index, 12) * 45}ms` }}
     >
       <div className="relative">
-        <InstanceTile name={data.name} hue={data.hue} className="h-16 w-16 text-3xl" />
-        <span className="absolute inset-0 grid place-items-center rounded-xl bg-black/45 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 group-hover:opacity-100">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg">
-            <Play size={16} />
-          </span>
+        <InstanceTile name={data.name} className="h-12 w-12" />
+        <span className="absolute inset-0 grid place-items-center rounded-md bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+          <Play size={18} className="text-primary" />
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display truncate text-[15px] font-semibold leading-tight">
-            {data.name}
-          </h3>
-          <button
-            type="button"
-            aria-label="Favorita"
-            onClick={(e) => {
-              e.preventDefault();
-              setFav((v) => !v);
-            }}
-            className={cn(
-              "shrink-0 transition-colors",
-              fav ? "text-warning" : "text-muted-foreground/40 hover:text-muted-foreground",
-            )}
-          >
-            <Star size={16} filled={fav} />
-          </button>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", STATUS_DOT[data.status])} />
+          <h3 className="truncate text-sm font-semibold">{data.name}</h3>
         </div>
-
-        <span className="font-mono text-[11px] text-muted-foreground">{data.build}</span>
-
-        <div className="mt-auto flex flex-wrap items-center gap-x-1.5 gap-y-1 pt-2.5">
-          <Badge tone={STATUS_TONE[data.status]}>
-            {data.status === "running" && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-            {t(`status.${data.status}`)}
-          </Badge>
-          <Badge tone="outline">{t("library.modCount", { count: data.mods })}</Badge>
-          <span className="ml-auto truncate font-mono text-[11px] text-muted-foreground">
-            {data.lastPlayed ?? t("status.never")}
-          </span>
+        <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap font-mono text-[11px] text-muted-foreground">
+          <span className="shrink-0">{data.build}</span>
+          <span className="text-border">|</span>
+          <span className="shrink-0">{t("library.modCount", { count: data.mods })}</span>
+          <span className="text-border">|</span>
+          <span className="truncate">{data.lastPlayed ?? t("status.never")}</span>
         </div>
       </div>
+
+      <button
+        type="button"
+        aria-label="Favorita"
+        onClick={(e) => {
+          e.preventDefault();
+          setFav((v) => !v);
+        }}
+        className={cn(
+          "shrink-0 transition-colors",
+          fav ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground",
+        )}
+      >
+        <Star size={16} filled={fav} />
+      </button>
     </Link>
   );
 }
