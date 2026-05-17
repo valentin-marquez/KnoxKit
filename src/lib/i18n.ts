@@ -12,7 +12,7 @@ export type Locale = keyof typeof resources;
 
 i18next.use(initReactI18next).init({
   resources,
-  lng: "en",
+  lng: "es-CL",
   fallbackLng: "en",
   defaultNS: "translation",
   interpolation: {

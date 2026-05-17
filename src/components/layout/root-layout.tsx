@@ -3,11 +3,11 @@ import { Topbar } from "@/components/layout/topbar";
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="app-grain relative flex h-full w-full overflow-hidden bg-background">
       <Sidebar />
-      <div className="flex h-full flex-1 flex-col overflow-hidden">
+      <div className="relative z-10 flex h-full flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

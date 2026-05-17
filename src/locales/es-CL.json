@@ -1,8 +1,8 @@
 {
   "nav": {
-    "dashboard": "Panel",
     "instances": "Instancias",
-    "mods": "Mods",
+    "mods": "Workshop",
+    "import": "Importar pack",
     "settings": "Ajustes"
   },
   "common": {
@@ -10,21 +10,94 @@
     "cancel": "Cancelar",
     "import": "Importar",
     "export": "Exportar",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "open": "Abrir carpeta",
+    "refresh": "Actualizar",
+    "search": "Buscar"
   },
-  "route": {
-    "dashboard": {
-      "title": "Panel"
+  "status": {
+    "idle": "Inactiva",
+    "running": "En ejecución",
+    "updating": "Actualizando",
+    "never": "Nunca jugada"
+  },
+  "topbar": {
+    "none": "Sin instancias en ejecución",
+    "running": "{{count}} instancia activa",
+    "running_other": "{{count}} instancias activas"
+  },
+  "library": {
+    "title": "Instancias",
+    "new": "Nueva instancia",
+    "searchPlaceholder": "Buscar instancias",
+    "sortBy": "Ordenar por",
+    "groupBy": "Agrupar por",
+    "sort": { "name": "Nombre", "played": "Última vez jugada", "created": "Fecha de creación" },
+    "group": { "none": "Ninguno", "build": "Build del juego", "tag": "Tipo" },
+    "filter": {
+      "all": "Todas",
+      "modpacks": "Modpacks",
+      "favorites": "Favoritas",
+      "servers": "Servidores"
     },
-    "instances": {
-      "title": "Instancias"
+    "count": "{{count}} instancia",
+    "count_other": "{{count}} instancias",
+    "play": "Jugar",
+    "emptyTitle": "Aún no hay instancias",
+    "emptyLog": "// sin sobrevivientes registrados. crea tu primera instancia pa' partir.",
+    "modCount": "{{count}} mod",
+    "modCount_other": "{{count}} mods",
+    "hours": "{{count}}h jugadas"
+  },
+  "instance": {
+    "play": "Jugar",
+    "stop": "Detener",
+    "folder": "Carpeta",
+    "settings": "Ajustes",
+    "tabs": {
+      "content": "Contenido",
+      "saves": "Partidas",
+      "logs": "Registros",
+      "settings": "Ajustes"
     },
-    "mods": {
-      "title": "Mods"
+    "build": "Build",
+    "lastPlayed": "Última vez",
+    "additional": "Mods instalados",
+    "browse": "Explorar Workshop",
+    "importMod": "Importar",
+    "searchContent": "Buscar mods instalados",
+    "contentFilter": {
+      "all": "Todos",
+      "enabled": "Activos",
+      "disabled": "Inactivos",
+      "updates": "Actualizaciones"
     },
-    "settings": {
-      "title": "Ajustes"
-    }
+    "col": { "name": "Mod", "version": "Versión", "actions": "" },
+    "enabled": "Activo",
+    "disabled": "Inactivo",
+    "by": "por {{author}}",
+    "notFound": "Instancia no encontrada"
+  },
+  "mods": {
+    "title": "Workshop",
+    "subtitle": "Explora y agrega mods del Steam Workshop a tus instancias.",
+    "discover": "Populares esta semana",
+    "soon": "La exploración del Workshop llega en un build más adelante."
+  },
+  "settings": {
+    "title": "Ajustes",
+    "general": "General",
+    "paths": "Rutas",
+    "appearance": "Apariencia",
+    "about": "Acerca de",
+    "steamcmd": "Ruta de SteamCMD",
+    "gamePath": "Ruta de Project Zomboid",
+    "defaultArgs": "Args de JVM por defecto",
+    "locale": "Idioma",
+    "theme": "Tema",
+    "browse": "Examinar",
+    "version": "KnoxKit v2.0.0",
+    "tagline": "Un gestor de instancias de Project Zomboid."
   },
   "modpack": {
     "import": {
@@ -32,7 +105,8 @@
       "workshopItems": "Ítems del Workshop",
       "loadOrder": "Orden de carga",
       "required": "Obligatorio",
-      "button": "Importar modpack"
+      "button": "Importar modpack",
+      "hint": "Suelta un archivo .knoxpack o pega su ruta pa' previsualizarlo."
     }
   },
   "theme": {

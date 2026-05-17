@@ -1,17 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/App";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/**
+ * KnoxKit has no separate dashboard yet — the instances library is the home
+ * screen, so `/` redirects there.
+ */
 export const Route = createFileRoute("/")({
-  component: DashboardRoute,
+  beforeLoad: () => {
+    throw redirect({ to: "/instances" });
+  },
 });
-
-function DashboardRoute() {
-  const { t } = useTranslation();
-  return (
-    <EmptyState
-      title={t("route.dashboard.title")}
-      description="Your Project Zomboid instances at a glance."
-    />
-  );
-}

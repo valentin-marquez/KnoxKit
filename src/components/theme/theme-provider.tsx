@@ -22,7 +22,7 @@ function readStored(): Theme {
   } catch {
     /* localStorage unavailable */
   }
-  return "system";
+  return "dark"; // KnoxKit is dark-first
 }
 
 function systemPref(): Resolved {

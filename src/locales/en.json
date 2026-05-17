@@ -1,8 +1,8 @@
 {
   "nav": {
-    "dashboard": "Dashboard",
     "instances": "Instances",
-    "mods": "Mods",
+    "mods": "Workshop",
+    "import": "Import pack",
     "settings": "Settings"
   },
   "common": {
@@ -10,21 +10,89 @@
     "cancel": "Cancel",
     "import": "Import",
     "export": "Export",
-    "delete": "Delete"
+    "delete": "Delete",
+    "open": "Open folder",
+    "refresh": "Refresh",
+    "search": "Search"
   },
-  "route": {
-    "dashboard": {
-      "title": "Dashboard"
+  "status": {
+    "idle": "Idle",
+    "running": "Running",
+    "updating": "Updating",
+    "never": "Never played"
+  },
+  "topbar": {
+    "none": "No instances running",
+    "running": "{{count}} instance running",
+    "running_other": "{{count}} instances running"
+  },
+  "library": {
+    "title": "Instances",
+    "new": "New instance",
+    "searchPlaceholder": "Search instances",
+    "sortBy": "Sort by",
+    "groupBy": "Group by",
+    "sort": { "name": "Name", "played": "Last played", "created": "Date created" },
+    "group": { "none": "None", "build": "Game build", "tag": "Type" },
+    "filter": {
+      "all": "All",
+      "modpacks": "Modpacks",
+      "favorites": "Favorites",
+      "servers": "Servers"
     },
-    "instances": {
-      "title": "Instances"
+    "count": "{{count}} instance",
+    "count_other": "{{count}} instances",
+    "play": "Play",
+    "emptyTitle": "No instances yet",
+    "emptyLog": "// no survivors logged. create your first instance to begin.",
+    "modCount": "{{count}} mod",
+    "modCount_other": "{{count}} mods",
+    "hours": "{{count}}h played"
+  },
+  "instance": {
+    "play": "Play",
+    "stop": "Stop",
+    "folder": "Folder",
+    "settings": "Settings",
+    "tabs": { "content": "Content", "saves": "Saves", "logs": "Logs", "settings": "Settings" },
+    "build": "Build",
+    "lastPlayed": "Last played",
+    "additional": "Installed mods",
+    "browse": "Browse Workshop",
+    "importMod": "Import",
+    "searchContent": "Search installed mods",
+    "contentFilter": {
+      "all": "All",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "updates": "Updates"
     },
-    "mods": {
-      "title": "Mods"
-    },
-    "settings": {
-      "title": "Settings"
-    }
+    "col": { "name": "Mod", "version": "Version", "actions": "" },
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "by": "by {{author}}",
+    "notFound": "Instance not found"
+  },
+  "mods": {
+    "title": "Workshop",
+    "subtitle": "Browse and add Steam Workshop mods to your instances.",
+    "discover": "Popular this week",
+    "soon": "Workshop browsing is coming in a later build."
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "paths": "Paths",
+    "appearance": "Appearance",
+    "about": "About",
+    "steamcmd": "SteamCMD path",
+    "gamePath": "Project Zomboid path",
+    "defaultArgs": "Default JVM args",
+    "locale": "Language",
+    "theme": "Theme",
+    "browse": "Browse",
+    "version": "KnoxKit v2.0.0",
+    "tagline": "A Project Zomboid instance manager."
   },
   "modpack": {
     "import": {
@@ -32,7 +100,8 @@
       "workshopItems": "Workshop items",
       "loadOrder": "Load order",
       "required": "Required",
-      "button": "Import modpack"
+      "button": "Import modpack",
+      "hint": "Drop a .knoxpack file or paste its path to preview it."
     }
   },
   "theme": {

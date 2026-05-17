@@ -35,3 +35,6 @@ Thumbs.db
 
 # NOTE: root-level reference assets (*.ttf, *.png) are intentionally NOT
 # ignored — they are tracked design references kept by the maintainer.
+
+# Playwright MCP verification artifacts
+.playwright-mcp/
