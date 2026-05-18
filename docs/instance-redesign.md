@@ -32,15 +32,14 @@ never hardcoded.
 
 ## 2. Proposed `Instance` schema (v2)
 
-Bump `instance::SCHEMA_VERSION` `1 → 2`. **Additive**: every new field is
-optional / has a default, so migration is trivial and old instances keep
-working. `game_version: String` is **kept** (advisory build string, also keeps
-parity with `modpack::Manifest.game_version`); a structured `branch` enum is
-**added** alongside it.
+Bump `instance::SCHEMA_VERSION` `1 → 2`. New fields are additive/optional;
+the one **breaking** change is `game_version: String → GameVersion { branch,
+build }` (decision §9.1), handled by the lazy migration below. Old instances
+keep working (migrated on read).
 
-| New field | Rust type | TS mirror | Purpose |
+| Field | Rust type | TS mirror | Purpose |
 |---|---|---|---|
-| `branch` | `Branch` enum | `Branch` union | PZ branch intent + compat hint (see §3) |
+| `game_version` *(changed)* | `GameVersion { branch: Branch, build: Option<String> }` | `{ branch: Branch; build: string \| null }` | PZ branch intent + discovered build (see §3); replaces the old free string |
 | `max_ram_mb` | `Option<u32>` | `number \| null` | Per-instance heap cap; overrides global; `None` ⇒ global/default (§4) |
 | `icon_path` | `Option<String>` | `string \| null` | Relative path to instance icon (`icon.png` in the folder); becomes `.knoxpack` `icon.png` on export |
 | `description` | `Option<String>` | `string \| null` | → manifest `description` |
@@ -59,10 +58,12 @@ forward-compat for future Steam branch names).
 ### Migration (1 → 2), lazy, disk-is-truth
 
 `disk::read` already owns deserialization. On reading an instance whose
-`schema_version == 1`: map it to v2 in memory (`branch = Stable`, except infer
-`Unstable` if the old free `game_version` contained `beta`/`unstable`; all new
-`Option` fields `None`; `max_ram_mb = None`), then **rewrite the file as v2**
-(atomic write already exists). No separate migration command, no one-shot pass —
+`schema_version == 1`: map it to v2 in memory — old free `game_version` →
+`GameVersion { branch, build }` (`branch = Unstable` if the string contained
+`beta`/`unstable`, else `Stable`; `build = Some(old_string)` when it looked
+like a version like `41.78.16`, else `None`); all new `Option` fields `None`;
+`max_ram_mb = None` — then **rewrite the file as v2** (atomic write already
+exists). No separate migration command, no one-shot pass —
 consistent with "disk is the only source of truth" and the `index.json`
 rebuild-from-folders philosophy. `instance::Input` gains the same optional
 fields (all defaulted) so `create_instance` stays backward-compatible.
@@ -73,9 +74,9 @@ same data; no `.knoxpack` format change, no `schema_version` bump there.
 
 ## 3. Branch / version model
 
-- Persist `branch` (user intent). `game_version` stays the advisory build
-  string (e.g. `"41.78.16"`), discovered/refreshed from the detected install,
-  not authored.
+- `game_version.branch` is user intent (persisted). `game_version.build` is
+  the advisory build string (e.g. `"41.78.16"`), discovered/refreshed from the
+  detected install, not authored.
 - `Branch → Steam name`: `Stable→"" (default)`, `Unstable→"unstable"`,
   `OutdatedUnstable→"outdatedunstable"`, `Other(s)→s`. Used for **display +
   the detected-vs-intended comparison only** (KnoxKit does not invoke SteamCMD
@@ -207,16 +208,24 @@ Each phase is independently shippable; later phases assume earlier schema.
 Phases are parallelizable in the usual disjoint-scope way (P1 backend-heavy,
 P4 mostly settings/UI, etc.) — to be partitioned when approved.
 
-## 9. Decisions to confirm before coding
+## 9. Locked decisions (reviewed)
 
-1. **Schema shape:** additive `branch` enum + keep `game_version: String`
-   (this doc's recommendation) **vs** W1's stricter structured
-   `game_version: { branch, build }` replacement.
-2. **RAM mechanism:** adopt `-pzexeconfig` per-instance JSON (robust,
-   recommended, supersedes the `--` bug) **vs** minimal fix (add `--` +
-   structured `max_ram_mb` on the command line).
-3. **Total-RAM dependency:** `windows-sys` FFI (lightest) **vs** `sysinfo`
-   (least code).
+1. **Schema shape: structured `game_version: { branch, build }`** replaces the
+   free `String` on `instance::Instance` (W1's stricter model). `branch:
+   Branch` enum + `build: Option<String>` (runtime-discovered, not authored).
+   Migration maps the old free string (`"stable"`/`"beta"`/`"unstable"`/`""`/
+   `"41.78.x"`) → `{ branch, build }`.
+   - **Portable-format guard (resolved):** `modpack::Manifest.game_version`
+     **stays `String`** in the `.knoxpack` manifest — on export it is a derived
+     display projection of the structured value (e.g. `"42 (unstable)"` /
+     `"41.78.16"`); on import it is parsed best-effort back into `{ branch,
+     build }`. This keeps the `.knoxpack` schema at `schema_version = 1` (no
+     breaking format change, forward-compat preserved). Structured-in-app,
+     string-on-the-wire.
+2. **RAM mechanism: `-pzexeconfig` per-instance JSON** (robust; supersedes and
+   fixes the `--` bug at the root).
+3. **Total-RAM dependency: `sysinfo`** with `default-features = false`
+   (least hand-written FFI; standard crate).
 
 ## 10. Sources
 
