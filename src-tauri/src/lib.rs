@@ -90,6 +90,11 @@ pub fn run() {
             commands::export_modpack,
             commands::import_modpack,
             commands::validate_modpack,
+            commands::get_setup_status,
+            commands::detect_game_path,
+            commands::set_game_path,
+            commands::detect_steamcmd,
+            commands::install_steamcmd,
         ]);
 
     if let Err(e) = builder.run(tauri::generate_context!()) {

@@ -7,5 +7,6 @@
 
 pub mod instances;
 pub mod modpack;
+pub mod setup;
 pub mod steamcmd;
 pub mod workshop;

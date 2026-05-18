@@ -63,6 +63,13 @@ pub fn settings_file() -> Result<PathBuf> {
     Ok(app_data_dir()?.join("settings.json"))
 }
 
+/// Directory the in-app SteamCMD install is downloaded and extracted into
+/// (`<appdata>/steamcmd`). The executable lands at
+/// `<steamcmd_dir>/steamcmd.exe`.
+pub fn steamcmd_dir() -> Result<PathBuf> {
+    Ok(app_data_dir()?.join("steamcmd"))
+}
+
 /// Path to the instance index file.
 pub fn index_file() -> Result<PathBuf> {
     Ok(instances_dir()?.join("index.json"))

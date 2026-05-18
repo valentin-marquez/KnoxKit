@@ -10,4 +10,5 @@ pub mod instance;
 pub mod mod_collection;
 pub mod modpack;
 pub mod settings;
+pub mod setup;
 pub mod workshop;

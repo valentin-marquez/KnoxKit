@@ -15,6 +15,7 @@ use crate::domain::instance::{self, Instance};
 use crate::domain::mod_collection::Collection;
 use crate::domain::modpack::Manifest;
 use crate::domain::settings::{Patch as SettingsPatch, Settings};
+use crate::domain::setup::Status as SetupStatus;
 use crate::domain::workshop::WorkshopRef;
 use crate::error::Result;
 use crate::state::State;
@@ -23,6 +24,7 @@ pub mod instances;
 pub mod modpack;
 pub mod mods;
 pub mod settings;
+pub mod setup;
 pub mod workshop;
 
 // --- instances ----------------------------------------------------------
@@ -149,4 +151,36 @@ pub async fn validate_modpack(
     pack_path: String,
 ) -> Result<Manifest> {
     modpack::validate(pack_path).await
+}
+
+// --- setup / onboarding -------------------------------------------------
+
+/// `get_setup_status` → `commands::setup::status`.
+#[tauri::command]
+pub async fn get_setup_status(_state: tauri::State<'_, State>) -> Result<SetupStatus> {
+    setup::status().await
+}
+
+/// `detect_game_path` → `commands::setup::detect_game_path`.
+#[tauri::command]
+pub async fn detect_game_path(_state: tauri::State<'_, State>) -> Result<Option<String>> {
+    setup::detect_game_path().await
+}
+
+/// `set_game_path` → `commands::setup::set_game_path`.
+#[tauri::command]
+pub async fn set_game_path(_state: tauri::State<'_, State>, path: String) -> Result<SetupStatus> {
+    setup::set_game_path(path).await
+}
+
+/// `detect_steamcmd` → `commands::setup::detect_steamcmd`.
+#[tauri::command]
+pub async fn detect_steamcmd(_state: tauri::State<'_, State>) -> Result<Option<String>> {
+    setup::detect_steamcmd().await
+}
+
+/// `install_steamcmd` → `commands::setup::install_steamcmd`.
+#[tauri::command]
+pub async fn install_steamcmd(_state: tauri::State<'_, State>) -> Result<String> {
+    setup::install_steamcmd().await
 }
