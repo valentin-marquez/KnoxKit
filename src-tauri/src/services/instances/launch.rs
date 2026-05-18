@@ -16,7 +16,7 @@ use crate::domain::instance::Instance;
 use crate::domain::settings::Settings;
 use crate::error::{Error, Result};
 use crate::paths;
-use crate::services::instances::disk;
+use crate::services::instances::{disk, pz};
 
 /// Canonical Project Zomboid 64-bit launcher executable name (Windows).
 const PZ_EXE: &str = "ProjectZomboid64.exe";
@@ -34,14 +34,27 @@ pub fn run(id: &str) -> Result<()> {
     let exe = resolve_exe(settings.game_path.as_deref())?;
     let args = build_args(&inst.jvm_args, &inst.path);
 
-    // TODO(review): write active mod list + load order into <cachedir> PZ
-    // config (format TBD — do not fabricate the PZ config format). The game
-    // still launches fully isolated, just without auto-applied mods.
-
-    // TODO(review): bump last_played on launch (needs a disk write helper,
-    // out of scope here).
+    // Make the enabled mods discoverable + active inside the instance's
+    // `-cachedir`: rebuild `<inst>/mods/` junctions and regenerate
+    // `<inst>/Server/servertest.ini` from `mods.json`. Best-effort: a failure
+    // to read mods or sync the layout must not block launching the (still
+    // fully isolated) game — per-mod problems are logged inside the sync.
+    match disk::read_mods(id) {
+        Ok(coll) => {
+            if let Err(e) = pz::sync_instance_mods(Path::new(&inst.path), &coll) {
+                tracing::warn!("mod sync failed for instance {id}, launching without mods: {e}");
+            }
+        }
+        Err(e) => tracing::warn!("could not read mods.json for instance {id}: {e}"),
+    }
 
     Command::new(&exe).args(&args).spawn()?;
+
+    // Stamp last_played after a successful spawn. A failure here is non-fatal:
+    // the game is already running; only the timestamp/index lags.
+    if let Err(e) = disk::touch_last_played(id) {
+        tracing::warn!("failed to update last_played for instance {id}: {e}");
+    }
     Ok(())
 }
 
@@ -94,10 +107,13 @@ fn resolve_exe(game_path: Option<&str>) -> Result<PathBuf> {
 ///
 /// The instance's `jvm_args` come first, followed by the load-bearing
 /// `-cachedir=<instance_path>` isolation argument (always present so PZ user
-/// data never leaks between instances).
+/// data never leaks between instances), then `-modfolders mods` so PZ
+/// enumerates the `<cachedir>/mods` set this launch rebuilt from `mods.json`.
 fn build_args(jvm_args: &[String], instance_path: &str) -> Vec<String> {
     let mut args: Vec<String> = jvm_args.to_vec();
     args.push(format!("-cachedir={instance_path}"));
+    args.push("-modfolders".to_string());
+    args.push("mods".to_string());
     args
 }
 
@@ -153,13 +169,20 @@ mod tests {
     }
 
     #[test]
-    fn build_args_always_includes_cachedir() {
+    fn build_args_always_includes_cachedir_and_modfolders() {
         let args = build_args(&[], "C:/data/instances/abc");
-        assert_eq!(args, vec!["-cachedir=C:/data/instances/abc".to_string()]);
+        assert_eq!(
+            args,
+            vec![
+                "-cachedir=C:/data/instances/abc".to_string(),
+                "-modfolders".to_string(),
+                "mods".to_string(),
+            ]
+        );
     }
 
     #[test]
-    fn build_args_preserves_jvm_args_before_cachedir() {
+    fn build_args_preserves_jvm_args_before_cachedir_and_modfolders() {
         let jvm = vec!["-Xmx4g".to_string(), "-Dfoo=bar".to_string()];
         let args = build_args(&jvm, "/inst/path");
         assert_eq!(
@@ -168,7 +191,19 @@ mod tests {
                 "-Xmx4g".to_string(),
                 "-Dfoo=bar".to_string(),
                 "-cachedir=/inst/path".to_string(),
+                "-modfolders".to_string(),
+                "mods".to_string(),
             ]
+        );
+    }
+
+    #[test]
+    fn build_args_includes_modfolders_mods() {
+        let args = build_args(&[], "/x");
+        assert!(
+            args.windows(2)
+                .any(|w| w == ["-modfolders".to_string(), "mods".to_string()]),
+            "args must contain `-modfolders mods`: {args:?}"
         );
     }
 }

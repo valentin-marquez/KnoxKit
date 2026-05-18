@@ -172,6 +172,21 @@ pub fn write_mods(id: &str, coll: &Collection) -> Result<()> {
     )
 }
 
+/// Stamp an instance's `last_played` with the current UTC time (RFC3339) and
+/// persist it. Atomic write of `instance.json`, then `index.json` is rebuilt
+/// so the fast-lookup cache stays in step with the folders (disk is the only
+/// source of truth — see docs/architecture.md).
+pub fn touch_last_played(id: &str) -> Result<()> {
+    let mut inst = read(id)?;
+    inst.last_played = Some(chrono::Utc::now().to_rfc3339());
+    atomic_write(
+        &instance_file(id)?,
+        serde_json::to_vec_pretty(&inst)?.as_slice(),
+    )?;
+    rebuild_index()?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -267,6 +282,41 @@ mod tests {
             // Read-back is structurally identical.
             let got = read_mods(&inst.id).expect("read back mods");
             assert_eq!(got, coll);
+        });
+    }
+
+    #[test]
+    fn touch_last_played_stamps_instance_and_index() {
+        with_temp_data(|| {
+            let inst = create(instance::Input {
+                name: "Played".into(),
+                game_version: "41.78".into(),
+                jvm_args: Vec::new(),
+            })
+            .expect("create");
+            assert_eq!(inst.last_played, None);
+
+            touch_last_played(&inst.id).expect("touch");
+
+            // instance.json now carries a parseable RFC3339 timestamp.
+            let got = read(&inst.id).expect("read after touch");
+            let stamp = got.last_played.expect("last_played set");
+            chrono::DateTime::parse_from_rfc3339(&stamp).expect("valid rfc3339");
+
+            // index.json mirrors the new last_played.
+            let idx_bytes =
+                std::fs::read(paths::index_file().expect("idx")).expect("read idx");
+            let idx: Index = serde_json::from_slice(&idx_bytes).expect("parse idx");
+            assert_eq!(idx.instances.len(), 1);
+            assert_eq!(idx.instances[0].last_played.as_deref(), Some(stamp.as_str()));
+        });
+    }
+
+    #[test]
+    fn touch_last_played_missing_is_not_found() {
+        with_temp_data(|| {
+            let err = touch_last_played("nope").expect_err("missing instance");
+            assert!(matches!(err, Error::NotFound(_)));
         });
     }
 }
