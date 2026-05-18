@@ -80,9 +80,8 @@ fn read_settings() -> Result<Settings> {
 ///
 /// The resolved path must exist on disk, otherwise [`Error::NotFound`].
 fn resolve_exe(game_path: Option<&str>) -> Result<PathBuf> {
-    let raw = game_path.ok_or_else(|| {
-        Error::NotFound("game_path not configured; set it in Settings".into())
-    })?;
+    let raw = game_path
+        .ok_or_else(|| Error::NotFound("game_path not configured; set it in Settings".into()))?;
 
     let candidate = Path::new(raw);
     let exe = if candidate
@@ -141,8 +140,8 @@ mod tests {
         let exe = tmp.path().join("ProjectZomboid64.exe");
         std::fs::write(&exe, b"fake").expect("write fake exe");
 
-        let resolved = resolve_exe(Some(exe.to_str().expect("utf8 path")))
-            .expect("existing exe resolves");
+        let resolved =
+            resolve_exe(Some(exe.to_str().expect("utf8 path"))).expect("existing exe resolves");
         assert_eq!(resolved, exe);
     }
 

@@ -103,7 +103,9 @@ pub fn sync_instance_mods(inst_path: &Path, coll: &Collection) -> Result<()> {
         if !entry.enabled {
             continue;
         }
-        let item_dir = inst_path.join("workshop").join(entry.workshop_id.to_string());
+        let item_dir = inst_path
+            .join("workshop")
+            .join(entry.workshop_id.to_string());
         if !item_dir.is_dir() {
             tracing::warn!(
                 "workshop item {} not downloaded yet ({}); skipping for launch",

@@ -92,9 +92,7 @@ pub fn link_into_instance(workshop_id: u64, instance_id: &str) -> Result<()> {
         )));
     }
 
-    let link_parent = paths::instances_dir()?
-        .join(instance_id)
-        .join("workshop");
+    let link_parent = paths::instances_dir()?.join(instance_id).join("workshop");
     paths::ensure_dir(&link_parent)?;
     let link = link_parent.join(workshop_id.to_string());
 
@@ -185,7 +183,11 @@ mod tests {
         let cached = ingest(&content_root, 12345).expect("ingest");
         assert!(cached.is_dir(), "cache dir should exist");
         assert!(
-            cached.join("mods").join("SomeMod").join("mod.info").exists(),
+            cached
+                .join("mods")
+                .join("SomeMod")
+                .join("mod.info")
+                .exists(),
             "mod.info should have moved into the cache"
         );
         assert!(

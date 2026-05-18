@@ -84,7 +84,8 @@ fn extract_paren_reason(tail: &str) -> String {
             return inner.to_string();
         }
     }
-    let cleaned = tail.trim_matches(|c: char| c == '(' || c == ')' || c == '.' || c.is_whitespace());
+    let cleaned =
+        tail.trim_matches(|c: char| c == '(' || c == ')' || c == '.' || c.is_whitespace());
     cleaned.to_string()
 }
 

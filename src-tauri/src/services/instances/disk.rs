@@ -304,11 +304,13 @@ mod tests {
             chrono::DateTime::parse_from_rfc3339(&stamp).expect("valid rfc3339");
 
             // index.json mirrors the new last_played.
-            let idx_bytes =
-                std::fs::read(paths::index_file().expect("idx")).expect("read idx");
+            let idx_bytes = std::fs::read(paths::index_file().expect("idx")).expect("read idx");
             let idx: Index = serde_json::from_slice(&idx_bytes).expect("parse idx");
             assert_eq!(idx.instances.len(), 1);
-            assert_eq!(idx.instances[0].last_played.as_deref(), Some(stamp.as_str()));
+            assert_eq!(
+                idx.instances[0].last_played.as_deref(),
+                Some(stamp.as_str())
+            );
         });
     }
 

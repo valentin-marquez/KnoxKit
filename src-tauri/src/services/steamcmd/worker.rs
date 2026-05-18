@@ -409,7 +409,11 @@ mod tests {
             .expect("cache dir")
             .join("12345");
         assert!(
-            cached.join("mods").join("SomeMod").join("mod.info").exists(),
+            cached
+                .join("mods")
+                .join("SomeMod")
+                .join("mod.info")
+                .exists(),
             "downloaded content should have been ingested into the cache"
         );
 
@@ -464,7 +468,11 @@ mod tests {
             .join("workshop")
             .join("555");
         assert!(
-            junction.join("mods").join("SomeMod").join("mod.info").exists(),
+            junction
+                .join("mods")
+                .join("SomeMod")
+                .join("mod.info")
+                .exists(),
             "instance junction should resolve into the cached content"
         );
 
