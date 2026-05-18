@@ -1,0 +1,17 @@
+Redirecting stderr to '/home/user/.steam/logs/stderr.txt'
+Logging directory: '/home/user/.steam/logs'
+[  0%] Checking for available updates...
+[----] Verifying installation...
+Steam Console Client (c) Valve Corporation - version 1717360273
+-- type 'quit' to exit --
+Loading Steam API...OK
+Connecting anonymously to Steam Public...
+Logged in OK
+Downloading item 2392709985 ...
+ Update state (0x11) preallocating, progress: 0.00 (0 / 10485760)
+ Update state (0x61) downloading, progress: 25.40 (2663383 / 10485760), 1.21 MB/s, ETA 00:00:06
+ Update state (0x61) downloading, progress: 75.00 (7864320 / 10485760), 2.04 MB/s, ETA 00:00:01
+ Update state (0x5) validating, progress: 100.00 (10485760 / 10485760)
+ Update state (0x101) committing, progress: 100.00 (10485760 / 10485760)
+Success. Downloaded item 2392709985 to "/home/user/.steam/steamapps/workshop/content/108600/2392709985" (10485760 bytes)
+Steam>quit

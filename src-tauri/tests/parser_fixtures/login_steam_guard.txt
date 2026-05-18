@@ -1,0 +1,7 @@
+Steam Console Client (c) Valve Corporation - version 1717360273
+-- type 'quit' to exit --
+Loading Steam API...OK
+Connecting anonymously to Steam Public...
+Login Failure: Account Logon Denied.
+Steam Guard code:
+Steam>quit
