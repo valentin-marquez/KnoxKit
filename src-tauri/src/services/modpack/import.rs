@@ -33,10 +33,25 @@ pub async fn run(jobs: &JobSender, pack_path: &str, target_name: &str) -> Result
     };
 
     // --- create instance -------------------------------------------------
+    // The manifest carries `game_version` as a display string; parse it
+    // best-effort back into the structured value. Identity fields pass
+    // through so an exported→imported instance keeps its pack identity
+    // (icon is intentionally NOT handled here — that is P3).
     let inst = disk::create(instance::Input {
         name: target_name.to_string(),
-        game_version: manifest.game_version.clone(),
+        game_version: instance::GameVersion::parse_loose(&manifest.game_version),
         jvm_args: Vec::new(),
+        max_ram_mb: None,
+        icon_path: None,
+        description: Some(manifest.description.clone()).filter(|s| !s.trim().is_empty()),
+        author: Some(manifest.author.clone()).filter(|s| !s.trim().is_empty()),
+        pack_version: Some(manifest.version.clone()).filter(|s| !s.trim().is_empty()),
+        pack_id: Some(manifest.pack_id.clone()).filter(|s| !s.trim().is_empty()),
+        source: Some(instance::Source {
+            kind: "knoxpack".to_string(),
+            pack_id: manifest.pack_id.clone(),
+            pack_version: manifest.version.clone(),
+        }),
     })?;
 
     // --- copy whitelisted overrides only --------------------------------

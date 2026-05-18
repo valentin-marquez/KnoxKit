@@ -36,15 +36,28 @@ pub fn run(instance_id: &str, output_path: &str) -> Result<()> {
         })
         .collect();
 
+    // `.knoxpack` keeps `game_version: String` (schema_version stays 1):
+    // project the structured value to its display string. Identity fields
+    // pass through losslessly when the instance carries them, else fall back
+    // to the previous defaults so existing packs are unaffected.
     let manifest = Manifest {
         schema_version: crate::domain::modpack::SCHEMA_VERSION,
         format: crate::domain::modpack::FORMAT.to_string(),
-        pack_id: uuid::Uuid::new_v4().to_string(),
+        pack_id: inst
+            .pack_id
+            .clone()
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
         name: inst.name.clone(),
-        version: "1.0.0".to_string(),
-        author: "knoxkit".to_string(),
-        description: format!("Exported from instance {}", inst.name),
-        game_version: inst.game_version.clone(),
+        version: inst
+            .pack_version
+            .clone()
+            .unwrap_or_else(|| "1.0.0".to_string()),
+        author: inst.author.clone().unwrap_or_else(|| "knoxkit".to_string()),
+        description: inst
+            .description
+            .clone()
+            .unwrap_or_else(|| format!("Exported from instance {}", inst.name)),
+        game_version: inst.game_version.manifest_string(),
         created_at: chrono::Utc::now().to_rfc3339(),
         workshop_items,
         mod_load_order: mods.mod_load_order.clone(),

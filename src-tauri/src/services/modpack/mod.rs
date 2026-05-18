@@ -42,8 +42,18 @@ mod tests {
         // --- synthesize a source instance -------------------------------
         let inst = disk::create(instance::Input {
             name: "Roundtrip Source".into(),
-            game_version: "41.78.16".into(),
+            game_version: instance::GameVersion {
+                branch: instance::Branch::Stable,
+                build: Some("41.78.16".into()),
+            },
             jvm_args: vec!["-Xmx6g".into(), "-Dzomboid=1".into()],
+            max_ram_mb: None,
+            icon_path: None,
+            description: None,
+            author: None,
+            pack_version: None,
+            pack_id: None,
+            source: None,
         })
         .expect("create source");
 
@@ -87,7 +97,23 @@ mod tests {
 
         let new_inst = disk::read(&new_id).expect("read imported");
         assert_eq!(new_inst.name, "Roundtrip Target");
-        assert_eq!(new_inst.game_version, "41.78.16");
+        // Export projected `41.78.16` → manifest string; import parsed it
+        // back to a structured Stable build (locked decision §9.1).
+        assert_eq!(
+            new_inst.game_version,
+            instance::GameVersion {
+                branch: instance::Branch::Stable,
+                build: Some("41.78.16".into()),
+            }
+        );
+        // Identity passed through the manifest losslessly.
+        assert_eq!(new_inst.author.as_deref(), Some("knoxkit"));
+        assert_eq!(new_inst.pack_version.as_deref(), Some("1.0.0"));
+        assert!(new_inst.pack_id.is_some(), "pack_id round-trips");
+        assert_eq!(
+            new_inst.source.as_ref().map(|s| s.kind.as_str()),
+            Some("knoxpack")
+        );
 
         // --- the override file was copied -------------------------------
         let copied = std::path::Path::new(&new_inst.path)
