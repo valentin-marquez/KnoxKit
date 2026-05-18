@@ -55,6 +55,10 @@ pub async fn run(jobs: &JobSender, pack_path: &str, target_name: &str) -> Result
         icon_source_path: None,
     })?;
 
+    // `create` derives `author` from the local profile; an imported pack must
+    // instead keep the pack's declared author so identity round-trips.
+    disk::set_pack_author(&inst.id, &manifest.author)?;
+
     // --- restore the pack icon (lossless roundtrip) ---------------------
     // docs/modpack-format.md §1: optional `icon.png` at the archive root.
     // Read it out and persist it into the new instance folder; a missing

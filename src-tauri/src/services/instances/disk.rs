@@ -70,9 +70,13 @@ const ICON_EXTS: &[&str] = &["png", "jpg", "jpeg", "webp", "gif", "bmp"];
 
 /// Read `profile_username` from the global `settings.json`, if set.
 ///
-/// `services/` must not import `commands/`, so this re-reads the settings
-/// file with the same default-on-absent contract `commands::settings` uses
-/// (small, local JSON — no dedicated settings service module exists).
+/// This is the single authoritative source of an instance's `author`:
+/// onboarding now requires a non-empty profile username (see
+/// `services::setup::status`), so by the time an instance can be created the
+/// name is guaranteed present. `services/` must not import `commands/`, so
+/// this re-reads the settings file with the same default-on-absent contract
+/// `commands::settings` uses (small, local JSON — no dedicated settings
+/// service module exists).
 fn profile_username() -> Option<String> {
     let file = paths::settings_file().ok()?;
     if !file.exists() {
@@ -144,6 +148,26 @@ pub fn set_icon_bytes(instance_id: &str, bytes: &[u8]) -> Result<()> {
     let dest = instance_dir(instance_id)?.join(ICON_FILE);
     atomic_write(&dest, bytes)?;
     inst.icon_path = Some(ICON_FILE.to_string());
+    atomic_write(
+        &instance_file(instance_id)?,
+        serde_json::to_vec_pretty(&inst)?.as_slice(),
+    )?;
+    rebuild_index()?;
+    Ok(())
+}
+
+/// Override an instance's `author` with the modpack's declared author.
+///
+/// `create` always derives `author` from the local profile (hand-made
+/// instances), but an instance created by **importing a `.knoxpack`** must
+/// keep the *pack's* author so the identity round-trips. Import calls this
+/// right after `create`. A blank `author` is a no-op (keeps the profile one).
+pub fn set_pack_author(instance_id: &str, author: &str) -> Result<()> {
+    if author.trim().is_empty() {
+        return Ok(());
+    }
+    let mut inst = read(instance_id)?;
+    inst.author = Some(author.to_string());
     atomic_write(
         &instance_file(instance_id)?,
         serde_json::to_vec_pretty(&inst)?.as_slice(),
@@ -263,13 +287,11 @@ pub fn create(input: instance::Input) -> Result<Instance> {
     paths::ensure_dir(&dir.join("saves"))?;
     paths::ensure_dir(&dir.join("workshop"))?;
 
-    // A blank/absent author defaults to the profile username (P4 surfaces
-    // the setting; reading it here keeps `services/` independent of
-    // `commands/`). Empty strings collapse to `None` rather than persisting "".
-    let author = input
-        .author
-        .filter(|a| !a.trim().is_empty())
-        .or_else(profile_username);
+    // `author` is always profile-derived: onboarding requires a non-empty
+    // profile username, so it is the single source of truth here. Any
+    // `input.author` is intentionally ignored (the schema field stays for
+    // backward compatibility but no longer feeds creation).
+    let author = profile_username();
 
     let inst = Instance {
         schema_version: instance::SCHEMA_VERSION,
@@ -688,9 +710,10 @@ mod tests {
     }
 
     #[test]
-    fn create_blank_author_falls_back_to_profile_username() {
+    fn create_author_is_always_the_profile_username() {
         with_temp_data(|| {
-            // Seed a settings.json with a profile username.
+            // Seed a settings.json with a profile username (guaranteed present
+            // post-onboarding — see services::setup::status).
             let s = crate::domain::settings::Settings {
                 profile_username: Some("survivor".into()),
                 ..crate::domain::settings::Settings::default()
@@ -702,11 +725,11 @@ mod tests {
             let inst = create(input("Authored", stable("41.78"), Vec::new())).expect("create");
             assert_eq!(inst.author.as_deref(), Some("survivor"));
 
-            // An explicit author wins over the profile fallback.
+            // `input.author` is ignored — author always comes from the profile.
             let mut inp = input("Explicit", stable("41.78"), Vec::new());
             inp.author = Some("hand-set".into());
             let inst2 = create(inp).expect("create 2");
-            assert_eq!(inst2.author.as_deref(), Some("hand-set"));
+            assert_eq!(inst2.author.as_deref(), Some("survivor"));
         });
     }
 }

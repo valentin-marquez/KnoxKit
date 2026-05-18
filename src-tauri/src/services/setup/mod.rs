@@ -39,10 +39,16 @@ fn write_settings(settings: &Settings) -> Result<()> {
     Ok(())
 }
 
-/// Current onboarding status derived from the persisted settings.
+/// Current onboarding status derived from the persisted settings. Onboarding
+/// is still required until the game path, the SteamCMD path, and a non-empty
+/// profile username are all configured.
 pub fn status() -> Result<Status> {
     let s = read_settings()?;
-    Ok(Status::from_paths(s.game_path, s.steamcmd_path))
+    Ok(Status::from_paths(
+        s.game_path,
+        s.steamcmd_path,
+        s.profile_username,
+    ))
 }
 
 /// Auto-detect the Project Zomboid install directory (Steam scan). Returns
@@ -63,7 +69,11 @@ pub fn set_game_path(path: &str) -> Result<Status> {
     let mut s = read_settings()?;
     s.game_path = Some(path.to_string());
     write_settings(&s)?;
-    Ok(Status::from_paths(s.game_path, s.steamcmd_path))
+    Ok(Status::from_paths(
+        s.game_path,
+        s.steamcmd_path,
+        s.profile_username,
+    ))
 }
 
 /// Resolve an already-available steamcmd (settings → in-app dir → repo-local).
@@ -98,7 +108,11 @@ pub fn install_steamcmd() -> Result<String> {
 pub fn reset() -> Result<Status> {
     let s = Settings::default();
     write_settings(&s)?;
-    Ok(Status::from_paths(s.game_path, s.steamcmd_path))
+    Ok(Status::from_paths(
+        s.game_path,
+        s.steamcmd_path,
+        s.profile_username,
+    ))
 }
 
 #[cfg(test)]
@@ -125,6 +139,21 @@ mod tests {
         unsafe {
             std::env::remove_var(paths::DATA_DIR_ENV);
         }
+    }
+
+    /// Hand-write `settings.steamcmd_path` (install() would hit the network).
+    fn set_steamcmd_path(path: &str) {
+        let mut s = read_settings().expect("read");
+        s.steamcmd_path = Some(path.to_string());
+        write_settings(&s).expect("write");
+    }
+
+    /// Hand-write `settings.profile_username` (the onboarding gate now
+    /// requires a non-empty username — the UI persists it via update_settings).
+    fn set_profile_username(name: &str) {
+        let mut s = read_settings().expect("read");
+        s.profile_username = Some(name.to_string());
+        write_settings(&s).expect("write");
     }
 
     #[test]
@@ -167,35 +196,48 @@ mod tests {
         let game = tmp.path().join("PZ");
         std::fs::create_dir_all(&game).expect("mkdir");
         set_game_path(&game.to_string_lossy()).expect("set game");
-        let mut s = read_settings().expect("read");
-        s.steamcmd_path = Some("C:\\sc\\steamcmd.exe".into());
-        write_settings(&s).expect("write");
+        set_steamcmd_path("C:\\sc\\steamcmd.exe");
+        set_profile_username("survivor");
         assert!(!status().expect("status").needs_onboarding);
 
         let st = reset().expect("reset");
         assert!(st.needs_onboarding);
         assert_eq!(st.game_path, None);
+        assert_eq!(st.profile_username, None);
         let reread = status().expect("status");
         assert!(reread.needs_onboarding);
         assert_eq!(reread.steamcmd_path, None);
+        assert_eq!(reread.profile_username, None);
         clear_env();
     }
 
     #[test]
-    fn status_complete_when_both_paths_set() {
+    fn status_still_needs_onboarding_without_username() {
         let (_g, tmp) = isolated();
         let game = tmp.path().join("PZ");
         std::fs::create_dir_all(&game).expect("mkdir");
         set_game_path(&game.to_string_lossy()).expect("set game");
+        set_steamcmd_path("C:\\sc\\steamcmd.exe");
 
-        // Hand-write a steamcmd path into settings (install() would hit the
-        // network; here we only assert the status derivation).
-        let mut s = read_settings().expect("read");
-        s.steamcmd_path = Some("C:\\sc\\steamcmd.exe".into());
-        write_settings(&s).expect("write");
+        // Game + steamcmd set, but no profile username → still onboarding.
+        let st = status().expect("status");
+        assert!(st.needs_onboarding);
+        assert_eq!(st.profile_username, None);
+        clear_env();
+    }
+
+    #[test]
+    fn status_complete_when_paths_and_username_set() {
+        let (_g, tmp) = isolated();
+        let game = tmp.path().join("PZ");
+        std::fs::create_dir_all(&game).expect("mkdir");
+        set_game_path(&game.to_string_lossy()).expect("set game");
+        set_steamcmd_path("C:\\sc\\steamcmd.exe");
+        set_profile_username("survivor");
 
         let st = status().expect("status");
         assert!(!st.needs_onboarding);
+        assert_eq!(st.profile_username.as_deref(), Some("survivor"));
         clear_env();
     }
 }
