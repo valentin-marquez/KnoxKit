@@ -4,3 +4,4 @@
 //! Callers write `instances::disk::list`, etc.
 
 pub mod disk;
+pub mod launch;

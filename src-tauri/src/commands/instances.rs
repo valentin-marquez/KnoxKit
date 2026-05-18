@@ -8,7 +8,7 @@
 use crate::domain::instance::{self, Instance};
 use crate::error::Result;
 use crate::events;
-use crate::services::instances::disk;
+use crate::services::instances::{disk, launch};
 
 /// List every instance. (registered via `commands::list_instances`)
 pub async fn list() -> Result<Vec<Instance>> {
@@ -38,8 +38,8 @@ pub async fn delete(id: String) -> Result<()> {
     disk::delete(&id)
 }
 
-/// Launch an instance (STUB). (registered via `commands::launch_instance`)
+/// Launch an instance. (registered via `commands::launch_instance`)
 pub async fn launch(id: String) -> Result<()> {
-    tracing::info!("would launch instance {id}");
-    Ok(())
+    tracing::info!("launching instance {id}");
+    launch::run(&id)
 }
