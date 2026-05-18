@@ -17,6 +17,9 @@ bun.lock linguist-generated=true
 # Windows-only scripts must keep CRLF.
 *.ps1 text eol=crlf
 
+# mod.info parser fixtures: preserve exact bytes (CRLF tolerance is under test).
+src-tauri/tests/modinfo_fixtures/** -text
+
 # Binary reference assets.
 *.ttf binary
 *.png binary
