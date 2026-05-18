@@ -11,6 +11,7 @@
 //! registration names and merely forward to the path-clean inner fns. Only the
 //! wrappers are registered (see `crate::handler()` in `lib.rs`).
 
+use crate::domain::branch;
 use crate::domain::instance::{self, Instance};
 use crate::domain::mod_collection::Collection;
 use crate::domain::modpack::Manifest;
@@ -21,6 +22,7 @@ use crate::domain::workshop::WorkshopRef;
 use crate::error::Result;
 use crate::state::State;
 
+pub mod branches;
 pub mod instances;
 pub mod modpack;
 pub mod mods;
@@ -73,6 +75,14 @@ pub async fn set_instance_icon(
     src_path: String,
 ) -> Result<Instance> {
     instances::set_icon(id, src_path).await
+}
+
+// --- branches -----------------------------------------------------------
+
+/// `list_branches` → `commands::branches::list`.
+#[tauri::command]
+pub async fn list_branches(_state: tauri::State<'_, State>) -> Result<Vec<branch::Info>> {
+    branches::list().await
 }
 
 // --- mods ---------------------------------------------------------------

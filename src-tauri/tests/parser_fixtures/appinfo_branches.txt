@@ -1,0 +1,45 @@
+"108600"
+{
+	"common"
+	{
+		"name"		"Project Zomboid"
+		"type"		"Game"
+	}
+	"depots"
+	{
+		"branches"
+		{
+			"public"
+			{
+				"buildid"		"22695648"
+				"timeupdated"		"1775656124"
+			}
+			"unstable"
+			{
+				"buildid"		"23177452"
+				"description"		"Latest Build 42 - UNSTABLE - BACKUP FIRST"
+				"timeupdated"		"1778497669"
+			}
+			"outdatedunstable"
+			{
+				"buildid"		"22869276"
+				"description"		"Unstable fallback branch for rollbacks and prior saves."
+				"timeupdated"		"1778502196"
+			}
+		}
+	}
+}
+
+# --- compact single-line variant of the same data (whitespace tolerance) ---
+# (the parser scans the FIRST "branches" block above; this block documents
+#  the compact shape and is left here for byte-shape reference only)
+#
+#	"branches"
+#	{
+#		"public" { "buildid" "22695648" "timeupdated" "1775656124" }
+#		"unstable" { "buildid" "23177452" "description" "Latest Build 42 - UNSTABLE - BACKUP FIRST" "timeupdated" "1778497669" }
+#		"outdatedunstable" { "buildid" "22869276" "description" "Unstable fallback branch for rollbacks and prior saves." "timeupdated" "1778502196" }
+#	}
+
+# TODO(review): confirm byte-exact framing against a real
+# `just steamcmd-run +app_info_print 108600` once steamcmd is installed.

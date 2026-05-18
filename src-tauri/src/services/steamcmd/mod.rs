@@ -4,6 +4,8 @@
 //! Callers write `steamcmd::worker::Worker`, `steamcmd::parser::parse_line`,
 //! `steamcmd::job::Job`.
 
+pub mod appinfo;
+pub mod appinfo_parser;
 pub mod job;
 pub mod parser;
 pub mod worker;

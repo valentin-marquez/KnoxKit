@@ -222,6 +222,43 @@ Yields `Quit`. The worker uses this to know the child is exiting cleanly
 (versus an unexpected EOF, which triggers crash recovery — see
 `docs/architecture.md`).
 
+## `app_info_print` — branch discovery (one-shot, NOT the worker)
+
+A **separate, bounded one-shot** call powers the `list_branches` command —
+it is not driven by the long-running worker (that actor is for Workshop
+downloads only). Anonymous SteamCMD can read app `108600`'s public appinfo:
+
+```
+steamcmd +login anonymous +app_info_update 1 +app_info_print 108600 +quit
+```
+
+The output is Valve **KeyValues** text. The relevant subtree is
+`"108600" → "depots" → "branches"`; each immediate child of `"branches"`
+is one branch — the key is the Steam branch name (`public`, `unstable`,
+`outdatedunstable`, …), with scalars `"buildid"`, optional `"description"`
+(absent on `public`), and `"timeupdated"`. Canonical frozen sample:
+
+```
+	"branches"
+	{
+		"public" { "buildid" "22695648" "timeupdated" "1775656124" }
+		"unstable" { "buildid" "23177452" "description" "Latest Build 42 - UNSTABLE - BACKUP FIRST" "timeupdated" "1778497669" }
+		"outdatedunstable" { "buildid" "22869276" "description" "Unstable fallback branch for rollbacks and prior saves." "timeupdated" "1778502196" }
+	}
+```
+
+Real `app_info_print` emits this tab-indented, one `"key" "value"` per
+line; the parser is whitespace/tab tolerant and proven on both shapes.
+This is parsed by **`services::steamcmd::appinfo_parser::parse_branches`**
+(pure, zero IO/async, hand-rolled quote/brace scan — no `vdf` crate),
+fixture `tests/parser_fixtures/appinfo_branches.txt`. The async one-shot +
+60 s timeout + static-fallback policy lives in
+`services::steamcmd::appinfo`; on **any** failure (no steamcmd, spawn
+error, timeout, empty parse) it returns the static fallback
+(`Stable`/`Unstable`/`OutdatedUnstable`) so instance creation is never
+blocked. **TODO(review):** confirm byte-exact framing against a real
+`just steamcmd-run +app_info_print 108600` once steamcmd is installed.
+
 ## Fixture cross-reference
 
 Several fixtures emit `Ready` / `LoginOk` more than once on purpose (the

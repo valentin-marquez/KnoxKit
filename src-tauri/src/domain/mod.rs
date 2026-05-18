@@ -6,6 +6,7 @@
 //! zero `tokio` dependencies. Types here serialize over Tauri IPC to the TS
 //! frontend using serde defaults (snake_case field names, NO `rename_all`).
 
+pub mod branch;
 pub mod instance;
 pub mod mod_collection;
 pub mod modpack;

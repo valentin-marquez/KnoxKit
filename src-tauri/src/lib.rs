@@ -96,6 +96,7 @@ pub fn run() {
             commands::delete_instance,
             commands::launch_instance,
             commands::set_instance_icon,
+            commands::list_branches,
             commands::list_mods,
             commands::import_workshop_collection,
             commands::toggle_mod,
