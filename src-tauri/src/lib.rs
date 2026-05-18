@@ -85,6 +85,7 @@ pub fn run() {
             commands::import_workshop_collection,
             commands::toggle_mod,
             commands::parse_workshop_url,
+            commands::get_system_ram,
             commands::get_settings,
             commands::update_settings,
             commands::export_modpack,

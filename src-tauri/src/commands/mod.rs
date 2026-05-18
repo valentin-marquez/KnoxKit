@@ -16,6 +16,7 @@ use crate::domain::mod_collection::Collection;
 use crate::domain::modpack::Manifest;
 use crate::domain::settings::{Patch as SettingsPatch, Settings};
 use crate::domain::setup::Status as SetupStatus;
+use crate::domain::system::Ram;
 use crate::domain::workshop::WorkshopRef;
 use crate::error::Result;
 use crate::state::State;
@@ -25,6 +26,7 @@ pub mod modpack;
 pub mod mods;
 pub mod settings;
 pub mod setup;
+pub mod system;
 pub mod workshop;
 
 // --- instances ----------------------------------------------------------
@@ -102,6 +104,14 @@ pub async fn parse_workshop_url(
     url: String,
 ) -> Result<WorkshopRef> {
     workshop::parse_url(url).await
+}
+
+// --- system -------------------------------------------------------------
+
+/// `get_system_ram` → `commands::system::get`.
+#[tauri::command]
+pub async fn get_system_ram(_state: tauri::State<'_, State>) -> Result<Ram> {
+    system::get().await
 }
 
 // --- settings -----------------------------------------------------------

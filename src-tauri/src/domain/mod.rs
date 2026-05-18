@@ -11,4 +11,5 @@ pub mod mod_collection;
 pub mod modpack;
 pub mod settings;
 pub mod setup;
+pub mod system;
 pub mod workshop;
