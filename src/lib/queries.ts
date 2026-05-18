@@ -11,19 +11,23 @@ import {
   createInstance,
   deleteInstance,
   getInstance,
+  getSettings,
   launchInstance,
   listInstances,
   listMods,
   toggleMod,
+  updateSettings,
 } from "@/lib/tauri/commands";
 import type { Id, Input, Instance } from "@/types/instance";
 import type { Collection } from "@/types/mod-collection";
+import type { Patch, Settings } from "@/types/settings";
 
 /** Centralized query keys — every hook and invalidation reads from here. */
 export const keys = {
   instances: ["instances"] as const,
   instance: (id: Id) => ["instance", id] as const,
   mods: (id: Id) => ["mods", id] as const,
+  settings: ["settings"] as const,
 };
 
 /** All known instances. */
@@ -76,6 +80,25 @@ export function useDeleteInstance() {
 export function useLaunchInstance() {
   return useMutation<void, Error, Id>({
     mutationFn: (id) => launchInstance(id),
+  });
+}
+
+/** The application settings (read from disk on the backend). */
+export function useSettings() {
+  return useQuery<Settings>({
+    queryKey: keys.settings,
+    queryFn: getSettings,
+  });
+}
+
+/** Apply a partial settings patch, then refresh from disk. */
+export function useUpdateSettings() {
+  const qc = useQueryClient();
+  return useMutation<Settings, Error, Patch>({
+    mutationFn: (patch) => updateSettings(patch),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.settings });
+    },
   });
 }
 

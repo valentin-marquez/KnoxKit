@@ -105,6 +105,11 @@
     "locale": "Idioma",
     "theme": "Tema",
     "browse": "Examinar",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "loading": "Cargando ajustes…",
+    "loadError": "No se pudieron cargar los ajustes.",
+    "saveError": "No se pudieron guardar los ajustes.",
     "version": "KnoxKit v2.0.0",
     "tagline": "Un gestor de instancias de Project Zomboid."
   },

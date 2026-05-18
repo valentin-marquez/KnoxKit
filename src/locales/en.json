@@ -95,6 +95,11 @@
     "locale": "Language",
     "theme": "Theme",
     "browse": "Browse",
+    "save": "Save",
+    "saving": "Saving…",
+    "loading": "Loading settings…",
+    "loadError": "Could not load settings.",
+    "saveError": "Could not save settings.",
     "version": "KnoxKit v2.0.0",
     "tagline": "A Project Zomboid instance manager."
   },

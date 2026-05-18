@@ -1,14 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Brand } from "@/components/layout/brand";
 import { type Theme, useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useSettings, useUpdateSettings } from "@/lib/queries";
+import * as dialog from "@/lib/tauri/dialog";
+import type { Patch } from "@/types/settings";
 
 export const Route = createFileRoute("/settings/")({
   component: SettingsRoute,
 });
+
+interface PathsDraft {
+  steamcmd_path: string;
+  game_path: string;
+  default_jvm_args: string;
+}
 
 function SettingsRoute() {
   const { t, i18n } = useTranslation();
@@ -46,36 +56,7 @@ function SettingsRoute() {
             </Row>
           </Section>
 
-          <Section title={t("settings.paths")}>
-            <Row label={t("settings.steamcmd")}>
-              <div className="flex w-full max-w-sm gap-2">
-                <Input
-                  defaultValue="tools/steamcmd/steamcmd.exe"
-                  className="h-8 rounded-lg font-mono text-xs"
-                />
-                <Button variant="outline" size="sm">
-                  {t("settings.browse")}
-                </Button>
-              </div>
-            </Row>
-            <Row label={t("settings.gamePath")}>
-              <div className="flex w-full max-w-sm gap-2">
-                <Input
-                  placeholder="C:\\…\\steamapps\\common\\ProjectZomboid"
-                  className="h-8 rounded-lg font-mono text-xs"
-                />
-                <Button variant="outline" size="sm">
-                  {t("settings.browse")}
-                </Button>
-              </div>
-            </Row>
-            <Row label={t("settings.defaultArgs")}>
-              <Input
-                defaultValue="-Xms2g -Xmx4g"
-                className="h-8 max-w-sm rounded-lg font-mono text-xs"
-              />
-            </Row>
-          </Section>
+          <PathsSection />
 
           <Section title={t("settings.about")}>
             <div className="flex items-center justify-between">
@@ -89,6 +70,118 @@ function SettingsRoute() {
         </div>
       </div>
     </div>
+  );
+}
+
+function PathsSection() {
+  const { t } = useTranslation();
+  const settings = useSettings();
+  const update = useUpdateSettings();
+
+  const [draft, setDraft] = useState<PathsDraft | null>(null);
+
+  // Seed/refresh the editable draft whenever the persisted settings change.
+  useEffect(() => {
+    if (settings.data) {
+      setDraft({
+        steamcmd_path: settings.data.steamcmd_path ?? "",
+        game_path: settings.data.game_path ?? "",
+        default_jvm_args: settings.data.default_jvm_args.join(" "),
+      });
+    }
+  }, [settings.data]);
+
+  const dirty =
+    draft != null &&
+    settings.data != null &&
+    (draft.steamcmd_path !== (settings.data.steamcmd_path ?? "") ||
+      draft.game_path !== (settings.data.game_path ?? "") ||
+      draft.default_jvm_args !== settings.data.default_jvm_args.join(" "));
+
+  function onSave() {
+    if (!draft) return;
+    const patch: Patch = {
+      steamcmd_path: draft.steamcmd_path.trim() === "" ? null : draft.steamcmd_path.trim(),
+      game_path: draft.game_path.trim() === "" ? null : draft.game_path.trim(),
+      default_jvm_args: draft.default_jvm_args
+        .split(" ")
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0),
+    };
+    update.mutate(patch);
+  }
+
+  async function browseSteamcmd() {
+    const picked = await dialog.pickFile();
+    if (picked != null) setDraft((d) => (d ? { ...d, steamcmd_path: picked } : d));
+  }
+
+  async function browseGamePath() {
+    const picked = await dialog.pickDirectory();
+    if (picked != null) setDraft((d) => (d ? { ...d, game_path: picked } : d));
+  }
+
+  if (settings.isPending) {
+    return (
+      <Section title={t("settings.paths")}>
+        <p className="text-xs text-muted-foreground">{t("settings.loading")}</p>
+      </Section>
+    );
+  }
+
+  if (settings.isError || !draft) {
+    return (
+      <Section title={t("settings.paths")}>
+        <p className="text-xs text-destructive">{t("settings.loadError")}</p>
+      </Section>
+    );
+  }
+
+  return (
+    <Section title={t("settings.paths")}>
+      <Row label={t("settings.steamcmd")}>
+        <div className="flex w-full max-w-sm gap-2">
+          <Input
+            value={draft.steamcmd_path}
+            onChange={(e) => setDraft({ ...draft, steamcmd_path: e.target.value })}
+            placeholder="tools/steamcmd/steamcmd.exe"
+            className="h-8 rounded-lg font-mono text-xs"
+          />
+          <Button variant="outline" size="sm" onClick={() => void browseSteamcmd()}>
+            {t("settings.browse")}
+          </Button>
+        </div>
+      </Row>
+      <Row label={t("settings.gamePath")}>
+        <div className="flex w-full max-w-sm gap-2">
+          <Input
+            value={draft.game_path}
+            onChange={(e) => setDraft({ ...draft, game_path: e.target.value })}
+            placeholder="C:\\…\\steamapps\\common\\ProjectZomboid"
+            className="h-8 rounded-lg font-mono text-xs"
+          />
+          <Button variant="outline" size="sm" onClick={() => void browseGamePath()}>
+            {t("settings.browse")}
+          </Button>
+        </div>
+      </Row>
+      <Row label={t("settings.defaultArgs")}>
+        <Input
+          value={draft.default_jvm_args}
+          onChange={(e) => setDraft({ ...draft, default_jvm_args: e.target.value })}
+          placeholder="-Xms2g -Xmx4g"
+          className="h-8 max-w-sm rounded-lg font-mono text-xs"
+        />
+      </Row>
+      <div className="flex items-center justify-end gap-3 pt-1">
+        {update.isError && (
+          <span className="text-xs text-destructive">{t("settings.saveError")}</span>
+        )}
+        <Button size="sm" onClick={onSave} disabled={!dirty || update.isPending}>
+          {update.isPending ? t("settings.saving") : t("settings.save")}
+        </Button>
+      </div>
+    </Section>
   );
 }
 
