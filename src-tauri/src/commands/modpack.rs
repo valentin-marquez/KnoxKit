@@ -10,6 +10,7 @@ use std::io::Read;
 use crate::domain::modpack::Manifest;
 use crate::error::{Error, Result};
 use crate::services::modpack::{export as export_svc, import as import_svc, manifest};
+use crate::services::steamcmd::worker::JobSender;
 
 /// Export an instance to a knoxpack archive.
 /// (registered via `commands::export_modpack`)
@@ -19,8 +20,8 @@ pub async fn export(instance_id: String, output_path: String) -> Result<()> {
 
 /// Import a knoxpack archive as a new instance; returns the new id.
 /// (registered via `commands::import_modpack`)
-pub async fn import(pack_path: String, target_name: String) -> Result<String> {
-    import_svc::run(&pack_path, &target_name)
+pub async fn import(jobs: JobSender, pack_path: String, target_name: String) -> Result<String> {
+    import_svc::run(&jobs, &pack_path, &target_name).await
 }
 
 /// Validate a knoxpack archive's manifest WITHOUT creating an instance.

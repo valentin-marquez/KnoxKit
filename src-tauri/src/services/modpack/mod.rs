@@ -21,8 +21,15 @@ mod tests {
     /// Export an instance with 2 workshop items + a jvm-args override, import
     /// it as a new instance, and assert the manifest survives the roundtrip
     /// and the override file was copied.
-    #[test]
-    fn export_import_roundtrip_preserves_manifest_and_override() {
+    //
+    // The std `MutexGuard` is intentionally held across the `import::run`
+    // await: the guard serializes the process-global `KNOXKIT_DATA_DIR` env
+    // var, which `import::run` reads, so it must stay held for the whole
+    // import. `#[tokio::test]` runs this future on a single-threaded runtime,
+    // so the guard never crosses a thread boundary.
+    #[allow(clippy::await_holding_lock)]
+    #[tokio::test]
+    async fn export_import_roundtrip_preserves_manifest_and_override() {
         let _guard = paths::TEST_ENV_LOCK
             .lock()
             .unwrap_or_else(|p| p.into_inner());
@@ -70,7 +77,12 @@ mod tests {
         };
 
         // --- import as a new instance -----------------------------------
-        let new_id = import::run(&pack_path.to_string_lossy(), "Roundtrip Target").expect("import");
+        // Channel capacity >= workshop item count so `import::run` never
+        // blocks on a full queue (nothing drains `_rx` in this test).
+        let (tx, _rx) = tokio::sync::mpsc::channel(8);
+        let new_id = import::run(&tx, &pack_path.to_string_lossy(), "Roundtrip Target")
+            .await
+            .expect("import");
         assert_ne!(new_id, inst.id, "import must create a new instance");
 
         let new_inst = disk::read(&new_id).expect("read imported");

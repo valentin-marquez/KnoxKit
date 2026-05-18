@@ -164,6 +164,14 @@ pub fn read_mods(id: &str) -> Result<Collection> {
     Ok(coll)
 }
 
+/// Atomically (over)write an instance's `mods.json` from `coll`.
+pub fn write_mods(id: &str, coll: &Collection) -> Result<()> {
+    atomic_write(
+        &instance_dir(id)?.join("mods.json"),
+        serde_json::to_vec_pretty(coll)?.as_slice(),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -224,6 +232,41 @@ mod tests {
         with_temp_data(|| {
             let err = read("does-not-exist").expect_err("should be missing");
             assert!(matches!(err, Error::NotFound(_)));
+        });
+    }
+
+    #[test]
+    fn mods_default_write_readback_roundtrip() {
+        use crate::domain::mod_collection::{Collection, ModEntry};
+
+        with_temp_data(|| {
+            let inst = create(instance::Input {
+                name: "Mods".into(),
+                game_version: "41.78".into(),
+                jvm_args: Vec::new(),
+            })
+            .expect("create");
+
+            // Default seeded mods.json reads back as an empty collection.
+            let default = read_mods(&inst.id).expect("read default mods");
+            assert_eq!(default, Collection::empty(inst.id.clone()));
+
+            // Mutate and persist.
+            let coll = Collection {
+                instance_id: inst.id.clone(),
+                workshop_ids: vec![2392709985, 262584809],
+                mods: vec![ModEntry {
+                    workshop_id: 2392709985,
+                    mod_ids: vec!["Brita".into()],
+                    enabled: true,
+                }],
+                mod_load_order: vec!["Brita".into()],
+            };
+            write_mods(&inst.id, &coll).expect("write mods");
+
+            // Read-back is structurally identical.
+            let got = read_mods(&inst.id).expect("read back mods");
+            assert_eq!(got, coll);
         });
     }
 }

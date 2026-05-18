@@ -6,17 +6,17 @@
 use std::io::Read;
 
 use crate::domain::instance;
+use crate::domain::mod_collection::{Collection, ModEntry};
 use crate::error::{Error, Result};
 use crate::services::instances::disk;
 use crate::services::modpack::manifest;
+use crate::services::steamcmd::{job, worker::JobSender};
 
 /// Open the knoxpack zip at `pack_path`, validate its manifest, create a new
-/// instance named `target_name`, copy only whitelisted overrides, and return
-/// the new instance id.
-///
-/// Enqueuing SteamCMD download jobs for the pack's workshop items is logged
-/// (stubbed) for the bootstrap.
-pub fn run(pack_path: &str, target_name: &str) -> Result<String> {
+/// instance named `target_name`, copy only whitelisted overrides, persist the
+/// pack's workshop ids into the new instance's `mods.json`, enqueue a SteamCMD
+/// download job per workshop item, and return the new instance id.
+pub async fn run(jobs: &JobSender, pack_path: &str, target_name: &str) -> Result<String> {
     let file = std::fs::File::open(pack_path)?;
     let mut archive = zip::ZipArchive::new(file)?;
 
@@ -62,11 +62,35 @@ pub fn run(pack_path: &str, target_name: &str) -> Result<String> {
         std::fs::write(&dest, &bytes)?;
     }
 
-    tracing::info!(
-        "would enqueue {} steamcmd download job(s) for imported pack {}",
-        manifest.workshop_items.len(),
-        manifest.name
-    );
+    // --- persist the pack's workshop ids into the new instance ----------
+    let coll = Collection {
+        instance_id: inst.id.clone(),
+        workshop_ids: manifest
+            .workshop_items
+            .iter()
+            .map(|w| w.workshop_id)
+            .collect(),
+        mods: manifest
+            .workshop_items
+            .iter()
+            .map(|w| ModEntry {
+                workshop_id: w.workshop_id,
+                mod_ids: Vec::new(),
+                enabled: true,
+            })
+            .collect(),
+        mod_load_order: manifest.mod_load_order.clone(),
+    };
+    disk::write_mods(&inst.id, &coll)?;
+
+    // --- enqueue a download job per workshop item -----------------------
+    for item in &manifest.workshop_items {
+        jobs.send(job::Job::DownloadMod {
+            workshop_id: item.workshop_id,
+        })
+        .await
+        .map_err(|e| Error::Steamcmd(format!("failed to enqueue download job: {e}")))?;
+    }
 
     Ok(inst.id)
 }

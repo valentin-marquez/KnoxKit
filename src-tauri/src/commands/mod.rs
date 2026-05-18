@@ -72,11 +72,12 @@ pub async fn list_mods(_state: tauri::State<'_, State>, instance_id: String) -> 
 /// `import_workshop_collection` → `commands::mods::import_collection`.
 #[tauri::command]
 pub async fn import_workshop_collection(
-    _state: tauri::State<'_, State>,
+    state: tauri::State<'_, State>,
     instance_id: String,
     url_or_id: String,
 ) -> Result<()> {
-    mods::import_collection(instance_id, url_or_id).await
+    let jobs = state.steamcmd.clone();
+    mods::import_collection(jobs, instance_id, url_or_id).await
 }
 
 /// `toggle_mod` → `commands::mods::toggle`.
@@ -133,11 +134,12 @@ pub async fn export_modpack(
 /// `import_modpack` → `commands::modpack::import`.
 #[tauri::command]
 pub async fn import_modpack(
-    _state: tauri::State<'_, State>,
+    state: tauri::State<'_, State>,
     pack_path: String,
     target_name: String,
 ) -> Result<String> {
-    modpack::import(pack_path, target_name).await
+    let jobs = state.steamcmd.clone();
+    modpack::import(jobs, pack_path, target_name).await
 }
 
 /// `validate_modpack` → `commands::modpack::validate`.
