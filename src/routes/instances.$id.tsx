@@ -1,30 +1,43 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { InstanceTile } from "@/components/instances/instance-tile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dots, Download, Folder, Play, Refresh, Search } from "@/components/ui/icons";
+import { Folder, Play, Refresh, Search } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
+import { useToast } from "@/components/ui/toast";
 import { Toggle } from "@/components/ui/toggle";
-import { findInstance, type ModRow as Mod, modsFor } from "@/lib/mock";
+import { useInstance, useInstanceMods, useLaunchInstance, useToggleMod } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import type { Id } from "@/types/instance";
+import type { ModEntry } from "@/types/mod-collection";
 
 export const Route = createFileRoute("/instances/$id")({
   component: InstanceDetailRoute,
 });
 
 type Tab = "content" | "saves" | "logs" | "settings";
-type ContentFilter = "all" | "enabled" | "disabled" | "updates";
+type ContentFilter = "all" | "enabled" | "disabled";
 
 function InstanceDetailRoute() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { id } = Route.useParams();
-  const instance = findInstance(id);
+  const { data: instance, isLoading, isError } = useInstance(id);
+  const launch = useLaunchInstance();
   const [tab, setTab] = useState<Tab>("content");
 
-  if (!instance) {
+  if (isLoading) {
+    return (
+      <div className="grid h-full place-items-center text-center text-sm text-muted-foreground">
+        …
+      </div>
+    );
+  }
+
+  if (isError || !instance) {
     return (
       <div className="grid h-full place-items-center text-center">
         <div>
@@ -38,6 +51,9 @@ function InstanceDetailRoute() {
   }
 
   const tabs: Tab[] = ["content", "saves", "logs", "settings"];
+  const lastPlayed = instance.last_played
+    ? new Date(instance.last_played).toLocaleString()
+    : t("status.never");
 
   return (
     <div className="flex h-full flex-col">
@@ -47,21 +63,32 @@ function InstanceDetailRoute() {
           <div className="min-w-0 flex-1">
             <h1 className="font-display truncate text-xl font-bold">{instance.name}</h1>
             <p className="mt-1 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-              <span>{instance.build}</span>
+              <span>{instance.game_version}</span>
               <span className="text-border">·</span>
-              <span>{t("library.hours", { count: instance.hours })}</span>
-              <span className="text-border">·</span>
-              <span>{t("library.modCount", { count: instance.mods })}</span>
-              <Badge tone={instance.status === "running" ? "success" : "muted"}>
-                {t(`status.${instance.status}`)}
-              </Badge>
+              <span>{lastPlayed}</span>
+              {/* Running-state isn't tracked on disk yet — always idle. */}
+              <Badge tone="muted">{t("status.idle")}</Badge>
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" aria-label={t("instance.folder")}>
               <Folder size={17} />
             </Button>
-            <Button size="md" className="gap-2 px-6">
+            <Button
+              size="md"
+              className="gap-2 px-6"
+              disabled={launch.isPending}
+              onClick={() =>
+                launch.mutate(instance.id, {
+                  onError: (err) =>
+                    toast({
+                      title: t("instance.play"),
+                      description: err instanceof Error ? err.message : String(err),
+                      variant: "destructive",
+                    }),
+                })
+              }
+            >
               <Play size={15} />
               {t("instance.play")}
             </Button>
@@ -97,17 +124,21 @@ function InstanceDetailRoute() {
   );
 }
 
-function ContentTab({ id }: { id: string }) {
+function ContentTab({ id }: { id: Id }) {
   const { t } = useTranslation();
-  const baseMods = useMemo(() => modsFor(id), [id]);
+  const { data, isLoading, isError, refetch, isFetching } = useInstanceMods(id);
   const [filter, setFilter] = useState<ContentFilter>("all");
   const [query, setQuery] = useState("");
 
-  const mods = baseMods.filter((m) => {
+  const entries = (data?.mods ?? []).filter((m) => {
     if (filter === "enabled" && !m.enabled) return false;
     if (filter === "disabled" && m.enabled) return false;
-    if (filter === "updates" && !m.hasUpdate) return false;
-    if (query.trim() && !m.name.toLowerCase().includes(query.toLowerCase())) return false;
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      const hit =
+        String(m.workshop_id).includes(q) || m.mod_ids.some((mid) => mid.toLowerCase().includes(q));
+      if (!hit) return false;
+    }
     return true;
   });
 
@@ -133,59 +164,69 @@ function ContentTab({ id }: { id: string }) {
             { value: "all", label: t("instance.contentFilter.all") },
             { value: "enabled", label: t("instance.contentFilter.enabled") },
             { value: "disabled", label: t("instance.contentFilter.disabled") },
-            { value: "updates", label: t("instance.contentFilter.updates") },
           ]}
         />
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          disabled={isFetching}
+          onClick={() => refetch()}
+        >
           <Refresh size={14} />
           {t("common.refresh")}
         </Button>
-        <Button size="sm" className="gap-1.5">
-          <Download size={14} />
-          {t("instance.browse")}
-        </Button>
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-md border border-border">
-        {mods.map((m, idx) => (
-          <ModItem key={m.id} mod={m} last={idx === mods.length - 1} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="mt-3 rounded-md border border-border py-16 text-center text-sm text-muted-foreground">
+          …
+        </div>
+      ) : isError ? (
+        <div className="mt-3 rounded-md border border-border py-16 text-center text-sm text-muted-foreground">
+          {t("instance.notFound")}
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="mt-3 rounded-md border border-border py-16 text-center text-sm text-muted-foreground">
+          {t("library.modCount", { count: 0 })}
+        </div>
+      ) : (
+        <div className="mt-3 overflow-hidden rounded-md border border-border">
+          {entries.map((m, idx) => (
+            <ModItem key={m.workshop_id} id={id} mod={m} last={idx === entries.length - 1} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function ModItem({ mod, last }: { mod: Mod; last: boolean }) {
-  const { t } = useTranslation();
-  const [enabled, setEnabled] = useState(mod.enabled);
+function ModItem({ id, mod, last }: { id: Id; mod: ModEntry; last: boolean }) {
+  const toggle = useToggleMod(id);
+  // Workshop item names/versions aren't resolved yet — show the workshop id
+  // and the mod ids it provides. TODO(review): hydrate names once the
+  // backend resolves workshop metadata.
+  const label = mod.mod_ids[0] ?? String(mod.workshop_id);
 
   return (
     <div
       className={cn(
         "flex items-center gap-3 bg-card px-3 py-2 hover:bg-accent/40",
         !last && "border-b border-border",
-        !enabled && "opacity-50",
+        !mod.enabled && "opacity-50",
       )}
     >
-      <InstanceTile name={mod.name} className="h-8 w-8" />
+      <InstanceTile name={label} className="h-8 w-8" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-[13px] font-medium">{mod.name}</span>
-          {mod.hasUpdate && <Badge tone="warning">update</Badge>}
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {t("instance.by", { author: mod.author })}
-        </span>
+        <span className="block truncate text-[13px] font-medium">{label}</span>
+        <span className="font-mono text-xs text-muted-foreground">#{mod.workshop_id}</span>
       </div>
-      <span className="font-mono text-xs text-muted-foreground">{mod.version}</span>
-      <Toggle checked={enabled} onChange={setEnabled} label={mod.name} />
-      <button
-        type="button"
-        aria-label="Más opciones"
-        className="ml-1 grid h-8 w-8 shrink-0 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-      >
-        <Dots size={18} />
-      </button>
+      <Toggle
+        checked={mod.enabled}
+        disabled={toggle.isPending}
+        onChange={(next) => toggle.mutate({ workshopId: mod.workshop_id, enabled: next })}
+        label={label}
+      />
     </div>
   );
 }

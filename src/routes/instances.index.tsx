@@ -3,63 +3,45 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { InstanceCard } from "@/components/instances/instance-card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Plus, Search } from "@/components/ui/icons";
+import { Dialog, DialogFooter } from "@/components/ui/dialog";
+import { Plus, Search } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
-import { Segmented } from "@/components/ui/segmented";
 import { Select } from "@/components/ui/select";
-import { type InstanceCard as Data, instances } from "@/lib/mock";
-import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
+import { useCreateInstance, useInstances } from "@/lib/queries";
+import type { Instance } from "@/types/instance";
 
 export const Route = createFileRoute("/instances/")({
   component: LibraryRoute,
 });
 
-type Filter = "all" | "modpacks" | "favorites" | "servers";
+// The old mock had `tag`/`favorite` filters; the backend tracks neither, so
+// only search + sort survive. Sort options that have a real field: name and
+// last-played. "created" maps to `created_at`.
 type Sort = "name" | "played" | "created";
-type Group = "none" | "build" | "tag";
 
 function LibraryRoute() {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState<Filter>("all");
+  const { data, isLoading, isError, error } = useInstances();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("name");
-  const [group, setGroup] = useState<Group>("none");
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+  const [dialog, setDialog] = useState(false);
 
-  const filtering = filter !== "all" || query.trim() !== "";
+  const all = data ?? [];
+  const filtering = query.trim() !== "";
 
   const list = useMemo(() => {
-    let out = instances.filter((i) => {
-      if (filter === "modpacks") return i.tag === "modpack";
-      if (filter === "servers") return i.tag === "server";
-      if (filter === "favorites") return i.favorite;
-      return true;
-    });
+    let out = all;
     if (query.trim()) {
       const q = query.toLowerCase();
       out = out.filter((i) => i.name.toLowerCase().includes(q));
     }
     return [...out].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
-      if (sort === "played") return b.hours - a.hours;
-      return 0;
+      if (sort === "played") return playedRank(b) - playedRank(a);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [filter, query, sort]);
-
-  const groups = useMemo(() => groupBy(list, group), [list, group]);
-
-  const toggleGroup = (key: string) =>
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-
-  const resetFilters = () => {
-    setFilter("all");
-    setQuery("");
-  };
+  }, [all, query, sort]);
 
   return (
     <div className="flex h-full flex-col">
@@ -67,28 +49,20 @@ function LibraryRoute() {
         <div className="flex items-baseline gap-3">
           <h1 className="font-display text-lg font-bold">{t("library.title")}</h1>
           <span className="font-mono text-xs text-muted-foreground">
-            {filtering
-              ? t("library.results", { count: list.length, total: instances.length })
-              : t("library.count", { count: instances.length })}
+            {isLoading
+              ? "…"
+              : filtering
+                ? t("library.results", { count: list.length, total: all.length })
+                : t("library.count", { count: all.length })}
           </span>
         </div>
-        <Button size="sm" className="gap-1.5">
+        <Button size="sm" className="gap-1.5" onClick={() => setDialog(true)}>
           <Plus size={15} />
           {t("library.new")}
         </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-2.5">
-        <Segmented
-          value={filter}
-          onChange={(v) => setFilter(v as Filter)}
-          options={[
-            { value: "all", label: t("library.filter.all") },
-            { value: "modpacks", label: t("library.filter.modpacks") },
-            { value: "favorites", label: t("library.filter.favorites") },
-            { value: "servers", label: t("library.filter.servers") },
-          ]}
-        />
         <div className="relative min-w-[180px] flex-1">
           <Search
             size={15}
@@ -111,91 +85,142 @@ function LibraryRoute() {
             { value: "created", label: t("library.sort.created") },
           ]}
         />
-        <Select
-          label={t("library.groupBy")}
-          value={group}
-          onChange={(v) => setGroup(v as Group)}
-          options={[
-            { value: "none", label: t("library.group.none") },
-            { value: "build", label: t("library.group.build") },
-            { value: "tag", label: t("library.group.tag") },
-          ]}
-        />
       </div>
 
       <div className="flex-1 overflow-auto p-5">
-        {instances.length === 0 ? (
-          <Empty title={t("library.emptyTitle")} hint={t("library.emptyHint")} />
+        {isLoading ? (
+          <Empty title="…" hint={t("library.searchPlaceholder")} />
+        ) : isError ? (
+          <Empty
+            title={t("library.emptyTitle")}
+            hint={error instanceof Error ? error.message : String(error)}
+          />
+        ) : all.length === 0 ? (
+          <Empty
+            title={t("library.emptyTitle")}
+            hint={t("library.emptyHint")}
+            action={
+              <Button size="sm" onClick={() => setDialog(true)} className="gap-1.5">
+                <Plus size={15} />
+                {t("library.new")}
+              </Button>
+            }
+          />
         ) : list.length === 0 ? (
           <Empty
             title={t("library.noResults")}
             hint={t("library.noResultsHint")}
             action={
-              <Button size="sm" variant="outline" onClick={resetFilters}>
+              <Button size="sm" variant="outline" onClick={() => setQuery("")}>
                 {t("library.clearFilters")}
               </Button>
             }
           />
         ) : (
-          <div className="space-y-5">
-            {groups.map(({ key, items }) => {
-              const isCollapsed = collapsed.has(key);
-              return (
-                <section key={key}>
-                  {group !== "none" && (
-                    <button
-                      type="button"
-                      onClick={() => toggleGroup(key)}
-                      className="mb-2 flex w-full items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-                    >
-                      <ChevronDown
-                        size={14}
-                        className={cn("transition-transform", isCollapsed && "-rotate-90")}
-                      />
-                      <span>{groupLabel(key, group, t)}</span>
-                      <span className="font-mono font-normal normal-case text-muted-foreground/60">
-                        {items.length}
-                      </span>
-                      <span className="ml-1 h-px flex-1 bg-border" />
-                    </button>
-                  )}
-                  {!isCollapsed && (
-                    <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]">
-                      {items.map((d) => (
-                        <InstanceCard key={d.id} data={d} />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
+          <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]">
+            {list.map((d) => (
+              <InstanceCard key={d.id} data={d} />
+            ))}
           </div>
         )}
       </div>
+
+      <CreateDialog open={dialog} onClose={() => setDialog(false)} />
     </div>
   );
 }
 
-function groupBy(list: Data[], group: Group): { key: string; items: Data[] }[] {
-  if (group === "none") return [{ key: "all", items: list }];
-  const map = new Map<string, Data[]>();
-  for (const item of list) {
-    const key = group === "build" ? item.build : item.tag;
-    const bucket = map.get(key);
-    if (bucket) bucket.push(item);
-    else map.set(key, [item]);
-  }
-  return [...map.entries()].map(([key, items]) => ({ key, items }));
+/** Instances never played sort last. */
+function playedRank(i: Instance): number {
+  return i.last_played ? new Date(i.last_played).getTime() : 0;
 }
 
-function groupLabel(key: string, group: Group, t: (k: string) => string): string {
-  if (group !== "tag") return key;
-  const map: Record<string, string> = {
-    modpack: t("library.filter.modpacks"),
-    server: t("library.filter.servers"),
-    custom: t("library.group.custom"),
+function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const create = useCreateInstance();
+  const [name, setName] = useState("");
+  const [gameVersion, setGameVersion] = useState("");
+
+  const reset = () => {
+    setName("");
+    setGameVersion("");
   };
-  return map[key] ?? key;
+
+  const submit = () => {
+    const trimmedName = name.trim();
+    const trimmedVersion = gameVersion.trim();
+    if (!trimmedName || !trimmedVersion) return;
+    create.mutate(
+      { name: trimmedName, game_version: trimmedVersion },
+      {
+        onSuccess: (instance) => {
+          toast({ title: t("library.new"), description: instance.name, variant: "success" });
+          reset();
+          onClose();
+        },
+        onError: (err) => {
+          toast({
+            title: t("library.new"),
+            description: err instanceof Error ? err.message : String(err),
+            variant: "destructive",
+          });
+        },
+      },
+    );
+  };
+
+  const canSubmit = name.trim() !== "" && gameVersion.trim() !== "" && !create.isPending;
+
+  return (
+    <Dialog open={open} onClose={onClose} title={t("library.new")}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+        className="space-y-3"
+      >
+        <div className="space-y-1">
+          <label
+            htmlFor="create-instance-name"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            {t("library.sort.name")}
+          </label>
+          <Input
+            id="create-instance-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Hardcore Apocalipsis"
+            autoFocus
+          />
+        </div>
+        <div className="space-y-1">
+          <label
+            htmlFor="create-instance-version"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            {t("instance.build")}
+          </label>
+          <Input
+            id="create-instance-version"
+            value={gameVersion}
+            onChange={(e) => setGameVersion(e.target.value)}
+            placeholder="41.78.16"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" type="button" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button size="sm" type="submit" disabled={!canSubmit}>
+            {t("common.create")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
 }
 
 function Empty({ title, hint, action }: { title: string; hint: string; action?: React.ReactNode }) {

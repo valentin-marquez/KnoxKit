@@ -1,8 +1,9 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "@/components/ui/icons";
-import { findInstance, runningCount } from "@/lib/mock";
+import { useInstances } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import type { Instance } from "@/types/instance";
 
 interface Crumb {
   label: string;
@@ -13,9 +14,11 @@ export function Topbar() {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data } = useInstances();
 
-  const crumbs = buildCrumbs(pathname, t);
-  const running = runningCount > 0;
+  const crumbs = buildCrumbs(pathname, t, data ?? []);
+  // Running-state isn't tracked on disk yet — always report none.
+  const running = false;
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-card pl-2 pr-3">
@@ -69,20 +72,20 @@ export function Topbar() {
             running ? "bg-success" : "bg-muted-foreground/40",
           )}
         />
-        {running ? t("topbar.running", { count: runningCount }) : t("topbar.none")}
+        {t("topbar.none")}
       </div>
     </header>
   );
 }
 
-function buildCrumbs(pathname: string, t: (k: string) => string): Crumb[] {
+function buildCrumbs(pathname: string, t: (k: string) => string, instances: Instance[]): Crumb[] {
   const root: Crumb = { label: "KnoxKit", to: "/instances" };
 
   if (pathname.startsWith("/instances")) {
     const rest = pathname.slice("/instances".length).replace(/^\//, "");
     const crumbs: Crumb[] = [root, { label: t("library.title"), to: "/instances" }];
     if (rest) {
-      const found = findInstance(rest);
+      const found = instances.find((i) => i.id === rest);
       crumbs.push({ label: found ? found.name : rest });
     }
     return crumbs;
