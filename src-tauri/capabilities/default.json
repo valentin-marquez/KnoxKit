@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Core permissions for the main window plus the file/folder picker used by Settings.",
+  "windows": ["main"],
+  "permissions": ["core:default", "dialog:allow-open"]
+}
