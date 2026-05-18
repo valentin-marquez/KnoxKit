@@ -42,6 +42,7 @@ chrono = { version = "0.4.44", features = ["serde"] }
 # Blocking HTTP for the in-app SteamCMD download. rustls TLS only — NO
 # native-tls/OpenSSL so the Windows MSVC build needs zero system deps.
 ureq = { version = "3.3.0", default-features = false, features = ["rustls"] }
+sysinfo = { version = "0.39.2", default-features = false, features = ["system"] }
 
 # Windows-only Steam install-path lookup (HKCU/HKLM Valve keys).
 [target.'cfg(windows)'.dependencies]
