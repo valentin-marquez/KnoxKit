@@ -53,6 +53,15 @@
     "modCount_other": "{{count}} mods",
     "hours": "{{count}}h played"
   },
+  "create": {
+    "branch": "Game branch",
+    "branchStable": "Stable — Build 41",
+    "branchUnstable": "Unstable — Build 42",
+    "branchOutdated": "Outdated Unstable — Build 42",
+    "build": "Build (optional)",
+    "buildHint": "Advisory only — KnoxKit cannot change Steam's installed branch.",
+    "creating": "Creating…"
+  },
   "instance": {
     "play": "Play",
     "stop": "Stop",

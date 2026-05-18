@@ -58,6 +58,15 @@
     "modCount_other": "{{count}} mods",
     "hours": "{{count}}h jugadas"
   },
+  "create": {
+    "branch": "Rama del juego",
+    "branchStable": "Estable — Build 41",
+    "branchUnstable": "Inestable — Build 42",
+    "branchOutdated": "Inestable antigua — Build 42",
+    "build": "Build (opcional)",
+    "buildHint": "Solo referencial — KnoxKit no puede cambiar la rama que tení instalada en Steam.",
+    "creating": "Creando…"
+  },
   "instance": {
     "play": "Jugar",
     "stop": "Detener",

@@ -7,7 +7,7 @@ import { Dialog, DialogFooter } from "@/components/ui/dialog";
 import { ChevronRight, Dots, Play } from "@/components/ui/icons";
 import { useDeleteInstance, useInstanceMods } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { Instance } from "@/types/instance";
+import { gameVersionLabel, type Instance } from "@/types/instance";
 
 // Running-state is not tracked on disk yet (see CLAUDE.md rule 2): instances
 // always render as "idle". `favorite`/`hours` from the old mock have no
@@ -56,7 +56,7 @@ export function InstanceCard({ data }: { data: Instance }) {
             <h3 className="truncate text-sm font-semibold">{data.name}</h3>
           </div>
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap font-mono text-[11px] text-muted-foreground">
-            <span className="shrink-0">{data.game_version}</span>
+            <span className="shrink-0">{gameVersionLabel(data.game_version)}</span>
             <span className="text-border">|</span>
             <span className="shrink-0">{t("library.modCount", { count: modCount })}</span>
             <span className="text-border">|</span>

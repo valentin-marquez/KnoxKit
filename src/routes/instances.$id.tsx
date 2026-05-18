@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { Toggle } from "@/components/ui/toggle";
 import { useInstance, useInstanceMods, useLaunchInstance, useToggleMod } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { Id } from "@/types/instance";
+import { gameVersionLabel, type Id } from "@/types/instance";
 import type { ModEntry } from "@/types/mod-collection";
 
 export const Route = createFileRoute("/instances/$id")({
@@ -63,7 +63,7 @@ function InstanceDetailRoute() {
           <div className="min-w-0 flex-1">
             <h1 className="font-display truncate text-xl font-bold">{instance.name}</h1>
             <p className="mt-1 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-              <span>{instance.game_version}</span>
+              <span>{gameVersionLabel(instance.game_version)}</span>
               <span className="text-border">·</span>
               <span>{lastPlayed}</span>
               {/* Running-state isn't tracked on disk yet — always idle. */}
