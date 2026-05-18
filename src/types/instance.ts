@@ -58,6 +58,12 @@ export interface Input {
   pack_version?: string | null;
   pack_id?: string | null;
   source?: Source | null;
+  /**
+   * Absolute path to an image to copy in as the instance icon at create
+   * time. The *source* to copy — not persisted as-is; the backend copies it
+   * to `<instance>/icon.png` and sets `icon_path`.
+   */
+  icon_source_path?: string | null;
 }
 
 /** Render a {@link Branch} as a short human label (matches Rust's labels). */

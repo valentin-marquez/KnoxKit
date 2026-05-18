@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { InstanceTile } from "@/components/instances/instance-tile";
+import { InstanceIcon } from "@/components/instances/instance-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogFooter } from "@/components/ui/dialog";
 import { ChevronRight, Dots, Play } from "@/components/ui/icons";
@@ -39,7 +39,7 @@ export function InstanceCard({ data }: { data: Instance }) {
         )}
       >
         <div className="relative">
-          <InstanceTile name={data.name} className="h-12 w-12" />
+          <InstanceIcon instance={data} className="h-12 w-12" />
           <span className="absolute inset-0 grid place-items-center rounded-[0.6rem] bg-black/55 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground">
               <Play size={15} />
@@ -61,6 +61,12 @@ export function InstanceCard({ data }: { data: Instance }) {
             <span className="shrink-0">{t("library.modCount", { count: modCount })}</span>
             <span className="text-border">|</span>
             <span className="truncate">{lastPlayed}</span>
+            {data.author ? (
+              <>
+                <span className="text-border">|</span>
+                <span className="shrink-0">{t("instance.by", { author: data.author })}</span>
+              </>
+            ) : null}
           </div>
         </div>
 

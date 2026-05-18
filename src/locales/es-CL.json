@@ -68,6 +68,14 @@
     "ram": "RAM máxima",
     "ramHint": "Heap por instancia; sobrescribe el valor global.",
     "ramOf": "{{value}} de {{total}} GB",
+    "icon": "Ícono",
+    "pickIcon": "Elegir imagen…",
+    "iconHint": "Opcional. Se vuelve el icon.png del pack al exportar.",
+    "description": "Descripción (opcional)",
+    "descriptionPlaceholder": "De qué se trata este modpack",
+    "author": "Autor (opcional)",
+    "authorPlaceholder": "Tu nombre",
+    "packVersion": "Versión del pack (opcional)",
     "creating": "Creando…"
   },
   "profile": {
@@ -105,6 +113,9 @@
     "enabled": "Activo",
     "disabled": "Inactivo",
     "by": "por {{author}}",
+    "icon": "Ícono",
+    "changeIcon": "Cambiar ícono",
+    "iconSet": "Ícono actualizado",
     "notFound": "Instancia no encontrada"
   },
   "mods": {

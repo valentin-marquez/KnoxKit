@@ -38,6 +38,11 @@ export function launchInstance(id: Id): Promise<void> {
   return invoke<void>("launch_instance", { id });
 }
 
+/** Set (or replace) an instance's icon from a local image file path. */
+export function setInstanceIcon(id: Id, srcPath: string): Promise<Instance> {
+  return invoke<Instance>("set_instance_icon", { id, srcPath });
+}
+
 /** List the mod collection for an instance. */
 export function listMods(instanceId: Id): Promise<Collection> {
   return invoke<Collection>("list_mods", { instanceId });

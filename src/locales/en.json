@@ -63,6 +63,14 @@
     "ram": "Max RAM",
     "ramHint": "Per-instance heap; overrides the global default.",
     "ramOf": "{{value}} of {{total}} GB",
+    "icon": "Icon",
+    "pickIcon": "Choose image…",
+    "iconHint": "Optional. Becomes the pack's icon.png on export.",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "What this modpack is about",
+    "author": "Author (optional)",
+    "authorPlaceholder": "Your handle",
+    "packVersion": "Pack version (optional)",
     "creating": "Creating…"
   },
   "profile": {
@@ -95,6 +103,9 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "by": "by {{author}}",
+    "icon": "Icon",
+    "changeIcon": "Change icon",
+    "iconSet": "Icon updated",
     "notFound": "Instance not found"
   },
   "mods": {

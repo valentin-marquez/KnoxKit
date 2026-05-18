@@ -11,7 +11,9 @@ import { Select } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/toast";
 import * as anim from "@/lib/anim";
-import { useCreateInstance, useInstances, useSystemRam } from "@/lib/queries";
+import { useCreateInstance, useInstances, useSettings, useSystemRam } from "@/lib/queries";
+import { assetUrl } from "@/lib/tauri/asset";
+import { pickFile } from "@/lib/tauri/dialog";
 import type { Branch, Instance } from "@/types/instance";
 
 /** The `layoutId` shared between the trigger button and the dialog panel. */
@@ -181,14 +183,24 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const { toast } = useToast();
   const create = useCreateInstance();
   const { data: ram } = useSystemRam();
+  const { data: settings } = useSettings();
   const [name, setName] = useState("");
   const [branch, setBranch] = useState<BranchChoice>("Stable");
   const [build, setBuild] = useState("");
   // `null` ⇒ the user has not moved the slider yet; submit then sends the
   // backend default (`max_ram_mb` omitted). Once dragged it holds MB.
   const [ramMb, setRamMb] = useState<number | null>(null);
+  // Absolute path to the chosen icon source (copied into the instance on
+  // create); empty until the user picks one.
+  const [iconPath, setIconPath] = useState("");
+  const [description, setDescription] = useState("");
+  const [author, setAuthor] = useState("");
+  const [packVersion, setPackVersion] = useState("");
   const nameId = useId();
   const buildId = useId();
+  const descId = useId();
+  const authorId = useId();
+  const packVerId = useId();
 
   // Effective slider position in MB: the user's pick, else the machine
   // recommended default, else a safe floor until the snapshot arrives.
@@ -208,6 +220,15 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
     setBranch("Stable");
     setBuild("");
     setRamMb(null);
+    setIconPath("");
+    setDescription("");
+    setAuthor("");
+    setPackVersion("");
+  };
+
+  const onPickIcon = async () => {
+    const picked = await pickFile();
+    if (picked) setIconPath(picked);
   };
 
   // Close on Escape and lock background scroll while the panel is mounted.
@@ -227,6 +248,9 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
     // `branch` is a string-union that is exactly a unit `Branch` arm; the
     // wire shape is the bare PascalCase string (see src/types/instance.ts).
     const wireBranch: Branch = branch;
+    const trimmedDesc = description.trim();
+    const trimmedAuthor = author.trim();
+    const trimmedPackVer = packVersion.trim();
     create.mutate(
       {
         name: trimmedName,
@@ -234,6 +258,12 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
         // Only send an explicit cap when the user actually chose one;
         // otherwise the backend applies its machine default (and clamps).
         max_ram_mb: ramMb,
+        // Optional modpack identity (P3). Empty ⇒ omit so the backend keeps
+        // its defaults (author falls back to the profile username there).
+        icon_source_path: iconPath === "" ? null : iconPath,
+        description: trimmedDesc === "" ? null : trimmedDesc,
+        author: trimmedAuthor === "" ? null : trimmedAuthor,
+        pack_version: trimmedPackVer === "" ? null : trimmedPackVer,
       },
       {
         onSuccess: (instance) => {
@@ -339,6 +369,90 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
                     placeholder="41.78.16"
                   />
                   <p className="text-[11px] text-muted-foreground">{t("create.buildHint")}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="block text-xs font-medium text-muted-foreground">
+                    {t("create.icon")}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {iconPath ? (
+                      // `convertFileSrc` preview is allowed in this wrapper
+                      // layer pattern (assetUrl is the tiny @/lib/tauri
+                      // wrapper). It only renders if the asset-protocol scope
+                      // covers the picked path; the filename below is the
+                      // guaranteed fallback. See NOTES.md.
+                      <img
+                        src={assetUrl(iconPath)}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-[0.6rem] border border-border object-cover"
+                      />
+                    ) : (
+                      <div
+                        aria-hidden="true"
+                        className="grid h-12 w-12 shrink-0 place-items-center rounded-[0.6rem] border border-dashed border-border text-muted-foreground"
+                      >
+                        <Plus size={16} />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <Button type="button" variant="outline" size="sm" onClick={onPickIcon}>
+                        {t("create.pickIcon")}
+                      </Button>
+                      {iconPath ? (
+                        <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                          {iconPath.split(/[/\\]/).pop()}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {t("create.iconHint")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label
+                    htmlFor={descId}
+                    className="block text-xs font-medium text-muted-foreground"
+                  >
+                    {t("create.description")}
+                  </label>
+                  <Input
+                    id={descId}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder={t("create.descriptionPlaceholder")}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label
+                      htmlFor={authorId}
+                      className="block text-xs font-medium text-muted-foreground"
+                    >
+                      {t("create.author")}
+                    </label>
+                    <Input
+                      id={authorId}
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder={settings?.profile_username ?? t("create.authorPlaceholder")}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label
+                      htmlFor={packVerId}
+                      className="block text-xs font-medium text-muted-foreground"
+                    >
+                      {t("create.packVersion")}
+                    </label>
+                    <Input
+                      id={packVerId}
+                      value={packVersion}
+                      onChange={(e) => setPackVersion(e.target.value)}
+                      placeholder="1.0.0"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <Slider

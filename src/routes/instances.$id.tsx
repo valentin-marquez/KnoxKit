@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { InstanceIcon } from "@/components/instances/instance-icon";
 import { InstanceTile } from "@/components/instances/instance-tile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
 import { useToast } from "@/components/ui/toast";
 import { Toggle } from "@/components/ui/toggle";
-import { useInstance, useInstanceMods, useLaunchInstance, useToggleMod } from "@/lib/queries";
+import {
+  useInstance,
+  useInstanceMods,
+  useLaunchInstance,
+  useSetInstanceIcon,
+  useToggleMod,
+} from "@/lib/queries";
+import { pickFile } from "@/lib/tauri/dialog";
 import { cn } from "@/lib/utils";
 import { gameVersionLabel, type Id } from "@/types/instance";
 import type { ModEntry } from "@/types/mod-collection";
@@ -27,7 +35,30 @@ function InstanceDetailRoute() {
   const { id } = Route.useParams();
   const { data: instance, isLoading, isError } = useInstance(id);
   const launch = useLaunchInstance();
+  const setIcon = useSetInstanceIcon();
   const [tab, setTab] = useState<Tab>("content");
+
+  const onChangeIcon = async () => {
+    const picked = await pickFile();
+    if (!picked) return;
+    setIcon.mutate(
+      { id, srcPath: picked },
+      {
+        onSuccess: () =>
+          toast({
+            title: t("instance.icon"),
+            description: t("instance.iconSet"),
+            variant: "success",
+          }),
+        onError: (err) =>
+          toast({
+            title: t("instance.icon"),
+            description: err instanceof Error ? err.message : String(err),
+            variant: "destructive",
+          }),
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -59,16 +90,43 @@ function InstanceDetailRoute() {
     <div className="flex h-full flex-col">
       <div className="border-b border-border px-5 pt-4">
         <div className="flex items-center gap-4">
-          <InstanceTile name={instance.name} className="h-16 w-16" />
+          <button
+            type="button"
+            onClick={onChangeIcon}
+            disabled={setIcon.isPending}
+            aria-label={t("instance.changeIcon")}
+            title={t("instance.changeIcon")}
+            className="group/icon relative shrink-0 rounded-[0.6rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <InstanceIcon instance={instance} className="h-16 w-16" />
+            <span className="absolute inset-0 grid place-items-center rounded-[0.6rem] bg-black/55 text-[10px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover/icon:opacity-100">
+              {setIcon.isPending ? "…" : t("instance.changeIcon")}
+            </span>
+          </button>
           <div className="min-w-0 flex-1">
             <h1 className="font-display truncate text-xl font-bold">{instance.name}</h1>
             <p className="mt-1 flex items-center gap-2 font-mono text-xs text-muted-foreground">
               <span>{gameVersionLabel(instance.game_version)}</span>
               <span className="text-border">·</span>
               <span>{lastPlayed}</span>
+              {instance.author ? (
+                <>
+                  <span className="text-border">·</span>
+                  <span>{t("instance.by", { author: instance.author })}</span>
+                </>
+              ) : null}
+              {instance.pack_version ? (
+                <>
+                  <span className="text-border">·</span>
+                  <span>v{instance.pack_version}</span>
+                </>
+              ) : null}
               {/* Running-state isn't tracked on disk yet — always idle. */}
               <Badge tone="muted">{t("status.idle")}</Badge>
             </p>
+            {instance.description ? (
+              <p className="mt-1 truncate text-xs text-muted-foreground">{instance.description}</p>
+            ) : null}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" aria-label={t("instance.folder")}>

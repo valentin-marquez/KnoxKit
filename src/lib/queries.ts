@@ -22,6 +22,7 @@ import {
   listMods,
   resetSetup,
   setGamePath,
+  setInstanceIcon,
   toggleMod,
   updateSettings,
 } from "@/lib/tauri/commands";
@@ -91,6 +92,26 @@ export function useDeleteInstance() {
 export function useLaunchInstance() {
   return useMutation<void, Error, Id>({
     mutationFn: (id) => launchInstance(id),
+  });
+}
+
+interface SetIconVars {
+  id: Id;
+  srcPath: string;
+}
+
+/**
+ * Set/replace an instance's icon from a local image path, then refresh that
+ * instance and the list (disk is the source of truth — see CLAUDE.md rule 2).
+ */
+export function useSetInstanceIcon() {
+  const qc = useQueryClient();
+  return useMutation<Instance, Error, SetIconVars>({
+    mutationFn: ({ id, srcPath }) => setInstanceIcon(id, srcPath),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: keys.instance(id) });
+      qc.invalidateQueries({ queryKey: keys.instances });
+    },
   });
 }
 
