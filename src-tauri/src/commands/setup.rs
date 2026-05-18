@@ -45,3 +45,9 @@ pub async fn install_steamcmd() -> Result<String> {
         .await
         .map_err(|e| Error::Steamcmd(format!("steamcmd install task panicked: {e}")))?
 }
+
+/// Reset settings to defaults; re-triggers first-run onboarding.
+/// (registered via `commands::reset_setup`)
+pub async fn reset() -> Result<Status> {
+    setup::reset()
+}

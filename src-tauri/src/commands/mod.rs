@@ -184,3 +184,9 @@ pub async fn detect_steamcmd(_state: tauri::State<'_, State>) -> Result<Option<S
 pub async fn install_steamcmd(_state: tauri::State<'_, State>) -> Result<String> {
     setup::install_steamcmd().await
 }
+
+/// `reset_setup` → `commands::setup::reset`.
+#[tauri::command]
+pub async fn reset_setup(_state: tauri::State<'_, State>) -> Result<SetupStatus> {
+    setup::reset().await
+}

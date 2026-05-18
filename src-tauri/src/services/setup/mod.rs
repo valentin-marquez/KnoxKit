@@ -92,6 +92,15 @@ pub fn install_steamcmd() -> Result<String> {
     Ok(exe_str)
 }
 
+/// Reset all persisted settings to [`Settings::default`] — clears the
+/// configured Project Zomboid and SteamCMD paths so the first-run onboarding
+/// gate triggers again. Returns the (now fresh) status.
+pub fn reset() -> Result<Status> {
+    let s = Settings::default();
+    write_settings(&s)?;
+    Ok(Status::from_paths(s.game_path, s.steamcmd_path))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,6 +158,26 @@ mod tests {
         // Persisted: a fresh status read sees it.
         let reread = status().expect("status");
         assert_eq!(reread.game_path, st.game_path);
+        clear_env();
+    }
+
+    #[test]
+    fn reset_clears_paths_and_re_triggers_onboarding() {
+        let (_g, tmp) = isolated();
+        let game = tmp.path().join("PZ");
+        std::fs::create_dir_all(&game).expect("mkdir");
+        set_game_path(&game.to_string_lossy()).expect("set game");
+        let mut s = read_settings().expect("read");
+        s.steamcmd_path = Some("C:\\sc\\steamcmd.exe".into());
+        write_settings(&s).expect("write");
+        assert!(!status().expect("status").needs_onboarding);
+
+        let st = reset().expect("reset");
+        assert!(st.needs_onboarding);
+        assert_eq!(st.game_path, None);
+        let reread = status().expect("status");
+        assert!(reread.needs_onboarding);
+        assert_eq!(reread.steamcmd_path, None);
         clear_env();
     }
 

@@ -95,6 +95,7 @@ pub fn run() {
             commands::set_game_path,
             commands::detect_steamcmd,
             commands::install_steamcmd,
+            commands::reset_setup,
         ]);
 
     if let Err(e) = builder.run(tauri::generate_context!()) {
