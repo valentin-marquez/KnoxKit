@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Download, Folder } from "@/components/ui/icons";
+import { CheckCircle, Download, Folder, Info } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import * as anim from "@/lib/anim";
@@ -12,7 +12,9 @@ import {
   useDetectGamePath,
   useInstallSteamcmd,
   useSetGamePath,
+  useSettings,
   useSetupStatus,
+  useUpdateSettings,
 } from "@/lib/queries";
 import * as dialog from "@/lib/tauri/dialog";
 
@@ -145,6 +147,7 @@ function OnboardingRoute() {
           <div className="space-y-5">
             <GameStep done={gameDone} />
             <SteamcmdStep done={steamcmdDone} />
+            <ProfileStep />
 
             <motion.div layout transition={anim.spring} className="flex justify-end pt-1">
               <Button
@@ -285,6 +288,74 @@ function SteamcmdStep({ done }: { done: boolean }) {
           ) : (
             t("onboarding.install")
           )}
+        </Button>
+      </div>
+    </StepCard>
+  );
+}
+
+/**
+ * Optional, non-gating profile step. It never feeds the onboarding gate
+ * (`complete` is driven solely by `needs_onboarding`, itself game_path +
+ * steamcmd_path) — the user can set a multiplayer username now or skip it,
+ * and Continue stays enabled/disabled independently of this card.
+ */
+function ProfileStep() {
+  const { t } = useTranslation();
+  const settings = useSettings();
+  const update = useUpdateSettings();
+
+  const stored = settings.data?.profile_username ?? "";
+  const [name, setName] = useState("");
+  const [skipped, setSkipped] = useState(false);
+
+  // Reflect a previously-saved username (e.g. user came back after a reset).
+  useEffect(() => {
+    setName(settings.data?.profile_username ?? "");
+  }, [settings.data?.profile_username]);
+
+  // "Done" is local sugar only — it collapses the card once the user has
+  // either saved a name or chosen to skip. It does NOT touch the gate.
+  const done = (stored.trim() !== "" && !update.isError) || skipped;
+
+  function persist() {
+    const trimmed = name.trim();
+    update.mutate({ profile_username: trimmed === "" ? null : trimmed });
+  }
+
+  return (
+    <StepCard
+      icon={<Info size={18} />}
+      title={t("onboarding.profileTitle")}
+      doneLabel={t("onboarding.stepDone")}
+      done={done}
+      summary={
+        skipped && stored.trim() === "" ? (
+          <span>{t("onboarding.profileSkip")}</span>
+        ) : (
+          <span className="font-medium text-foreground">{stored}</span>
+        )
+      }
+    >
+      <p className="text-sm text-muted-foreground">{t("onboarding.profileDesc")}</p>
+
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") persist();
+        }}
+        placeholder={t("onboarding.profilePlaceholder")}
+        className="h-9 rounded-lg text-sm"
+        autoComplete="off"
+      />
+
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={() => setSkipped(true)}>
+          {t("onboarding.profileSkip")}
+        </Button>
+        <Button size="sm" disabled={name.trim() === "" || update.isPending} onClick={persist}>
+          {update.isPending ? t("onboarding.saving") : t("onboarding.save")}
         </Button>
       </div>
     </StepCard>

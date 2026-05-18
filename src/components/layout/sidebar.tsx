@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import type { ComponentType } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { type ComponentType, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Brand } from "@/components/layout/brand";
+import { ProfileField } from "@/components/profile/profile-field";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Box, Download, Gear, Grid } from "@/components/ui/icons";
+import * as anim from "@/lib/anim";
+import { useSettings } from "@/lib/queries";
 
 interface NavItem {
   to: string;
@@ -50,14 +54,77 @@ export function Sidebar() {
 
       <div className="flex flex-col items-center gap-1 border-t border-border py-2">
         <ThemeToggle />
-        <button
-          type="button"
-          aria-label="Perfil"
-          className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground hover:bg-accent"
-        >
-          V
-        </button>
+        <ProfileButton />
       </div>
     </aside>
+  );
+}
+
+/**
+ * Avatar/initial button under the theme toggle. Opens a small inline popover
+ * anchored to the rail holding the editable multiplayer username.
+ */
+function ProfileButton() {
+  const { t } = useTranslation();
+  const settings = useSettings();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const username = settings.data?.profile_username?.trim() ?? "";
+  const initial = username !== "" ? username[0]?.toUpperCase() : null;
+
+  // Dismiss on outside click / Escape while the popover is open.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        aria-label={t("profile.title")}
+        title={username !== "" ? username : t("profile.title")}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground hover:bg-accent"
+      >
+        {initial ?? <span className="text-muted-foreground">·</span>}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="profile-popover"
+            role="dialog"
+            aria-label={t("profile.title")}
+            initial={{ opacity: 0, scale: 0.94, x: -6 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.94, x: -6 }}
+            transition={anim.snappy}
+            className="absolute bottom-0 left-[125%] z-50 w-64 origin-bottom-left rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-xl"
+          >
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("profile.title")}
+            </p>
+            <ProfileField />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
