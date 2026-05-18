@@ -295,10 +295,12 @@ function SteamcmdStep({ done }: { done: boolean }) {
 }
 
 /**
- * Optional, non-gating profile step. It never feeds the onboarding gate
- * (`complete` is driven solely by `needs_onboarding`, itself game_path +
- * steamcmd_path) — the user can set a multiplayer username now or skip it,
- * and Continue stays enabled/disabled independently of this card.
+ * Required, gating profile step. The username feeds the onboarding gate:
+ * `needs_onboarding` (and therefore `complete`) is backend-driven and now
+ * stays true until a non-empty profile username is persisted, so this card
+ * collapsing to "done" tracks the same condition the Continue button does — no
+ * separate client gating logic. The name is the authoritative source for every
+ * instance's author.
  */
 function ProfileStep() {
   const { t } = useTranslation();
@@ -307,20 +309,20 @@ function ProfileStep() {
 
   const stored = settings.data?.profile_username ?? "";
   const [name, setName] = useState("");
-  const [skipped, setSkipped] = useState(false);
 
   // Reflect a previously-saved username (e.g. user came back after a reset).
   useEffect(() => {
     setName(settings.data?.profile_username ?? "");
   }, [settings.data?.profile_username]);
 
-  // "Done" is local sugar only — it collapses the card once the user has
-  // either saved a name or chosen to skip. It does NOT touch the gate.
-  const done = (stored.trim() !== "" && !update.isError) || skipped;
+  // The step is satisfied once a non-empty username is persisted — the same
+  // condition the backend gate keys off, so this collapse mirrors the gate.
+  const done = stored.trim() !== "" && !update.isError;
 
   function persist() {
     const trimmed = name.trim();
-    update.mutate({ profile_username: trimmed === "" ? null : trimmed });
+    if (trimmed === "") return;
+    update.mutate({ profile_username: trimmed });
   }
 
   return (
@@ -329,13 +331,7 @@ function ProfileStep() {
       title={t("onboarding.profileTitle")}
       doneLabel={t("onboarding.stepDone")}
       done={done}
-      summary={
-        skipped && stored.trim() === "" ? (
-          <span>{t("onboarding.profileSkip")}</span>
-        ) : (
-          <span className="font-medium text-foreground">{stored}</span>
-        )
-      }
+      summary={<span className="font-medium text-foreground">{stored}</span>}
     >
       <p className="text-sm text-muted-foreground">{t("onboarding.profileDesc")}</p>
 
@@ -350,10 +346,7 @@ function ProfileStep() {
         autoComplete="off"
       />
 
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={() => setSkipped(true)}>
-          {t("onboarding.profileSkip")}
-        </Button>
+      <div className="flex justify-end">
         <Button size="sm" disabled={name.trim() === "" || update.isPending} onClick={persist}>
           {update.isPending ? t("onboarding.saving") : t("onboarding.save")}
         </Button>

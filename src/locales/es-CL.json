@@ -162,7 +162,7 @@
   },
   "onboarding": {
     "title": "Bienvenido a KnoxKit",
-    "subtitle": "Dos cositas rápidas antes de que puedas manejar instancias.",
+    "subtitle": "Tres cositas rápidas antes de que puedas manejar instancias.",
     "step1Title": "Ubica Project Zomboid",
     "step1Desc": "KnoxKit necesita tu instalación de Project Zomboid pa' lanzar y parchar instancias.",
     "step2Title": "Configura SteamCMD",
@@ -184,10 +184,9 @@
     "errorGame": "Esa ruta no es una carpeta válida de Project Zomboid.",
     "errorSteamcmd": "No se pudo instalar SteamCMD. Revisa tu conexión y reintenta.",
     "stepDone": "Listo",
-    "profileTitle": "Tu nombre de jugador (opcional)",
-    "profileDesc": "Se usa pa' autocompletar las conexiones multijugador después. Lo podí cambiar cuando querái en Perfil.",
-    "profilePlaceholder": "Tu nombre en el juego",
-    "profileSkip": "Saltar por ahora"
+    "profileTitle": "Tu nombre de jugador",
+    "profileDesc": "Obligatorio. Queda como autor en cada instancia que creí y autocompleta las conexiones multijugador. Lo podí cambiar después en Perfil.",
+    "profilePlaceholder": "Tu nombre en el juego"
   },
   "theme": {
     "light": "Claro",

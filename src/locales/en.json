@@ -152,7 +152,7 @@
   },
   "onboarding": {
     "title": "Welcome to KnoxKit",
-    "subtitle": "Two quick things before you can start managing instances.",
+    "subtitle": "Three quick things before you can start managing instances.",
     "step1Title": "Locate Project Zomboid",
     "step1Desc": "KnoxKit needs your Project Zomboid install to launch and patch instances.",
     "step2Title": "Set up SteamCMD",
@@ -174,10 +174,9 @@
     "errorGame": "That path is not a valid Project Zomboid folder.",
     "errorSteamcmd": "Could not install SteamCMD. Check your connection and retry.",
     "stepDone": "Done",
-    "profileTitle": "Your player name (optional)",
-    "profileDesc": "Used to pre-fill multiplayer connections later. You can change it anytime in Profile.",
-    "profilePlaceholder": "Your in-game name",
-    "profileSkip": "Skip for now"
+    "profileTitle": "Your player name",
+    "profileDesc": "Required. Becomes the author on every instance you create and pre-fills multiplayer connections. You can change it later in Profile.",
+    "profilePlaceholder": "Your in-game name"
   },
   "theme": {
     "light": "Light",
