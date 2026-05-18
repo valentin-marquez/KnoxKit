@@ -18,6 +18,7 @@ import {
   getSystemRam,
   installSteamcmd,
   launchInstance,
+  listBranches,
   listInstances,
   listMods,
   resetSetup,
@@ -26,6 +27,7 @@ import {
   toggleMod,
   updateSettings,
 } from "@/lib/tauri/commands";
+import type { Info as BranchInfo } from "@/types/branch";
 import type { Id, Input, Instance } from "@/types/instance";
 import type { Collection } from "@/types/mod-collection";
 import type { Patch, Settings } from "@/types/settings";
@@ -40,6 +42,7 @@ export const keys = {
   settings: ["settings"] as const,
   setup: ["setup"] as const,
   systemRam: ["system", "ram"] as const,
+  branches: ["branches"] as const,
 };
 
 /** All known instances. */
@@ -124,6 +127,23 @@ export function useSystemRam() {
   return useQuery<Ram>({
     queryKey: keys.systemRam,
     queryFn: getSystemRam,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/**
+ * The Project Zomboid Steam branches for the create dialog's branch select.
+ *
+ * The backend always returns a non-empty list (it falls back to the static
+ * three on any SteamCMD failure/timeout), so this hook resolves fast and
+ * never blocks instance creation. Branches change rarely and the one-shot
+ * SteamCMD call is comparatively slow, so this is effectively per-session:
+ * `staleTime` is infinite (no background refetch).
+ */
+export function useBranches() {
+  return useQuery<BranchInfo[]>({
+    queryKey: keys.branches,
+    queryFn: listBranches,
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

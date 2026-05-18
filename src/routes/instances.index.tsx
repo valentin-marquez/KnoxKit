@@ -10,14 +10,23 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/toast";
+import { VersionInput } from "@/components/ui/version-input";
 import * as anim from "@/lib/anim";
-import { useCreateInstance, useInstances, useSettings, useSystemRam } from "@/lib/queries";
+import { useBranches, useCreateInstance, useInstances, useSystemRam } from "@/lib/queries";
 import { assetUrl } from "@/lib/tauri/asset";
 import { pickFile } from "@/lib/tauri/dialog";
 import type { Branch, Instance } from "@/types/instance";
 
-/** The `layoutId` shared between the trigger button and the dialog panel. */
-const MORPH_ID = "create-instance-morph";
+/**
+ * One `layoutId` per trigger so the dialog morphs out of the button the user
+ * actually clicked. The header button and the empty-state CTA can both be
+ * mounted at once (empty library), so they must NOT share an id — the panel
+ * picks the matching one via `origin`.
+ */
+const MORPH_HEADER = "create-instance-morph-header";
+const MORPH_EMPTY = "create-instance-morph-empty";
+
+type Origin = "header" | "empty";
 
 export const Route = createFileRoute("/instances/")({
   component: LibraryRoute,
@@ -34,6 +43,14 @@ function LibraryRoute() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("name");
   const [dialog, setDialog] = useState(false);
+  // Which button opened the dialog — drives which `layoutId` the panel morphs
+  // out of (and back into on close).
+  const [origin, setOrigin] = useState<Origin>("header");
+
+  const openFrom = (from: Origin) => {
+    setOrigin(from);
+    setDialog(true);
+  };
 
   const all = data ?? [];
   const filtering = query.trim() !== "";
@@ -65,7 +82,12 @@ function LibraryRoute() {
                   : t("library.count", { count: all.length })}
             </span>
           </div>
-          <MorphTrigger open={dialog} onOpen={() => setDialog(true)} label={t("library.new")} />
+          <MorphTrigger
+            morphId={MORPH_HEADER}
+            open={dialog}
+            onOpen={() => openFrom("header")}
+            label={t("library.new")}
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-2.5">
@@ -106,10 +128,12 @@ function LibraryRoute() {
               title={t("library.emptyTitle")}
               hint={t("library.emptyHint")}
               action={
-                <Button size="sm" onClick={() => setDialog(true)} className="gap-1.5">
-                  <Plus size={15} />
-                  {t("library.new")}
-                </Button>
+                <MorphTrigger
+                  morphId={MORPH_EMPTY}
+                  open={dialog}
+                  onOpen={() => openFrom("empty")}
+                  label={t("library.new")}
+                />
               }
             />
           ) : list.length === 0 ? (
@@ -131,23 +155,30 @@ function LibraryRoute() {
           )}
         </div>
 
-        <CreateDialog open={dialog} onClose={() => setDialog(false)} />
+        <CreateDialog
+          open={dialog}
+          morphId={origin === "empty" ? MORPH_EMPTY : MORPH_HEADER}
+          onClose={() => setDialog(false)}
+        />
       </div>
     </LayoutGroup>
   );
 }
 
 /**
- * The "New instance" trigger. It carries the shared `layoutId` so that, when
- * `open` flips, `motion` morphs this compact button into the dialog panel
- * (which carries the same id). While open the trigger is unmounted so the
- * single shared element is the panel — that is what produces the morph.
+ * The "New instance" trigger. It carries its own `layoutId` (`morphId`) so
+ * that, when `open` flips, `motion` morphs this compact button into the dialog
+ * panel (which adopts the clicked trigger's id via `origin`). While open the
+ * trigger is unmounted so the single shared element is the panel — that is
+ * what produces the morph.
  */
 function MorphTrigger({
+  morphId,
   open,
   onOpen,
   label,
 }: {
+  morphId: string;
   open: boolean;
   onOpen: () => void;
   label: string;
@@ -155,7 +186,7 @@ function MorphTrigger({
   if (open) return null;
   return (
     <motion.button
-      layoutId={MORPH_ID}
+      layoutId={morphId}
       type="button"
       onClick={onOpen}
       transition={anim.spring}
@@ -175,18 +206,51 @@ function playedRank(i: Instance): number {
   return i.last_played ? new Date(i.last_played).getTime() : 0;
 }
 
-/** The three branches the creation dialog offers (P1 — no `Other`). */
-type BranchChoice = "Stable" | "Unstable" | "OutdatedUnstable";
+/**
+ * Localized fallback label for a {@link Branch} — used when Steam supplies no
+ * branch description (e.g. `public`). `Other(name)` shows the raw name.
+ */
+function branchLabelFor(b: Branch, t: (k: string) => string): string {
+  if (typeof b === "object") return b.Other;
+  switch (b) {
+    case "Stable":
+      return t("create.branchStable");
+    case "Unstable":
+      return t("create.branchUnstable");
+    case "OutdatedUnstable":
+      return t("create.branchOutdated");
+  }
+}
 
-function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function CreateDialog({
+  open,
+  morphId,
+  onClose,
+}: {
+  open: boolean;
+  morphId: string;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const create = useCreateInstance();
   const { data: ram } = useSystemRam();
-  const { data: settings } = useSettings();
+  // Dynamic branch list. The backend always resolves this to a non-empty
+  // list (static fallback on any SteamCMD failure), so it never blocks the
+  // dialog; while it loads we render the static three locally.
+  const { data: branchData } = useBranches();
+  const branches: { steam_name: string; branch: Branch; description: string | null }[] =
+    branchData && branchData.length > 0
+      ? branchData
+      : [
+          { steam_name: "public", branch: "Stable", description: null },
+          { steam_name: "unstable", branch: "Unstable", description: null },
+          { steam_name: "outdatedunstable", branch: "OutdatedUnstable", description: null },
+        ];
   const [name, setName] = useState("");
-  const [branch, setBranch] = useState<BranchChoice>("Stable");
-  const [build, setBuild] = useState("");
+  // The selected branch is keyed by its raw Steam name (`public`/`unstable`/…)
+  // so it survives the static→dynamic swap and round-trips `Other(name)`.
+  const [branchKey, setBranchKey] = useState("public");
   // `null` ⇒ the user has not moved the slider yet; submit then sends the
   // backend default (`max_ram_mb` omitted). Once dragged it holds MB.
   const [ramMb, setRamMb] = useState<number | null>(null);
@@ -194,13 +258,10 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   // create); empty until the user picks one.
   const [iconPath, setIconPath] = useState("");
   const [description, setDescription] = useState("");
-  const [author, setAuthor] = useState("");
-  const [packVersion, setPackVersion] = useState("");
+  // `null`/`""` ⇒ pack version not set; the segmented input emits "x.y.z".
+  const [packVersion, setPackVersion] = useState<string | null>(null);
   const nameId = useId();
-  const buildId = useId();
   const descId = useId();
-  const authorId = useId();
-  const packVerId = useId();
 
   // Effective slider position in MB: the user's pick, else the machine
   // recommended default, else a safe floor until the snapshot arrives.
@@ -215,15 +276,18 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
     total: (totalMb / 1024).toFixed(1).replace(/\.0$/, ""),
   });
 
+  // The structured `Branch` for the current selection — taken from the loaded
+  // list (falls back to `Stable` if the key ever disappears mid-session).
+  const selectedBranch: Branch =
+    branches.find((b) => b.steam_name === branchKey)?.branch ?? "Stable";
+
   const reset = () => {
     setName("");
-    setBranch("Stable");
-    setBuild("");
+    setBranchKey("public");
     setRamMb(null);
     setIconPath("");
     setDescription("");
-    setAuthor("");
-    setPackVersion("");
+    setPackVersion(null);
   };
 
   const onPickIcon = async () => {
@@ -244,25 +308,22 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const submit = () => {
     const trimmedName = name.trim();
     if (!trimmedName) return;
-    const trimmedBuild = build.trim();
-    // `branch` is a string-union that is exactly a unit `Branch` arm; the
-    // wire shape is the bare PascalCase string (see src/types/instance.ts).
-    const wireBranch: Branch = branch;
     const trimmedDesc = description.trim();
-    const trimmedAuthor = author.trim();
-    const trimmedPackVer = packVersion.trim();
+    const trimmedPackVer = packVersion?.trim() ?? "";
     create.mutate(
       {
         name: trimmedName,
-        game_version: { branch: wireBranch, build: trimmedBuild === "" ? null : trimmedBuild },
+        // `build` is runtime-discovered, not user-authored — always `null`
+        // from the create dialog (the field was removed by decision).
+        game_version: { branch: selectedBranch, build: null },
         // Only send an explicit cap when the user actually chose one;
         // otherwise the backend applies its machine default (and clamps).
         max_ram_mb: ramMb,
         // Optional modpack identity (P3). Empty ⇒ omit so the backend keeps
-        // its defaults (author falls back to the profile username there).
+        // its defaults. `author` is intentionally NOT collected here — the
+        // backend always sets it to the profile username.
         icon_source_path: iconPath === "" ? null : iconPath,
         description: trimmedDesc === "" ? null : trimmedDesc,
-        author: trimmedAuthor === "" ? null : trimmedAuthor,
         pack_version: trimmedPackVer === "" ? null : trimmedPackVer,
       },
       {
@@ -300,19 +361,25 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
             onClick={onClose}
           />
           <motion.div
-            layoutId={MORPH_ID}
+            layoutId={morphId}
             role="dialog"
             aria-modal="true"
             aria-label={t("library.new")}
-            transition={anim.spring}
+            // Layout (size/radius) rides the spring; the blur runs as a short
+            // tween so the button→panel deformation is smeared out and never
+            // reads as a stretch, then resolves fully sharp.
+            initial={{ filter: "blur(14px)" }}
+            animate={{ filter: "blur(0px)" }}
+            exit={{ filter: "blur(14px)" }}
+            transition={{ ...anim.spring, filter: { duration: 0.26, ease: "easeOut" } }}
             style={{ borderRadius: 12 }}
             className="relative w-full max-w-lg overflow-hidden border border-border bg-card p-5 text-card-foreground shadow-2xl"
           >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={anim.snappy}
+              initial={{ opacity: 0, filter: "blur(8px)" }}
+              animate={{ opacity: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, filter: "blur(8px)" }}
+              transition={{ ...anim.snappy, filter: { duration: 0.26, ease: "easeOut" } }}
             >
               <h2 className="text-lg font-semibold leading-none tracking-tight">
                 {t("library.new")}
@@ -345,30 +412,18 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
                   </span>
                   <Select
                     label={t("create.branch")}
-                    value={branch}
-                    onChange={(v) => setBranch(v as BranchChoice)}
-                    options={[
-                      { value: "Stable", label: t("create.branchStable") },
-                      { value: "Unstable", label: t("create.branchUnstable") },
-                      { value: "OutdatedUnstable", label: t("create.branchOutdated") },
-                    ]}
+                    value={branchKey}
+                    onChange={(v) => setBranchKey(v)}
+                    options={branches.map((b) => ({
+                      value: b.steam_name,
+                      // Prefer Valve's own description (e.g. "Latest Build
+                      // 42 - UNSTABLE - BACKUP FIRST"); fall back to the
+                      // localized branch label when absent (e.g. public).
+                      label: b.description ?? branchLabelFor(b.branch, t),
+                    }))}
                     className="w-full"
                   />
-                </div>
-                <div className="space-y-1">
-                  <label
-                    htmlFor={buildId}
-                    className="block text-xs font-medium text-muted-foreground"
-                  >
-                    {t("create.build")}
-                  </label>
-                  <Input
-                    id={buildId}
-                    value={build}
-                    onChange={(e) => setBuild(e.target.value)}
-                    placeholder="41.78.16"
-                  />
-                  <p className="text-[11px] text-muted-foreground">{t("create.buildHint")}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("create.branchHint")}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="block text-xs font-medium text-muted-foreground">
@@ -424,35 +479,13 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
                     placeholder={t("create.descriptionPlaceholder")}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label
-                      htmlFor={authorId}
-                      className="block text-xs font-medium text-muted-foreground"
-                    >
-                      {t("create.author")}
-                    </label>
-                    <Input
-                      id={authorId}
-                      value={author}
-                      onChange={(e) => setAuthor(e.target.value)}
-                      placeholder={settings?.profile_username ?? t("create.authorPlaceholder")}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label
-                      htmlFor={packVerId}
-                      className="block text-xs font-medium text-muted-foreground"
-                    >
-                      {t("create.packVersion")}
-                    </label>
-                    <Input
-                      id={packVerId}
-                      value={packVersion}
-                      onChange={(e) => setPackVersion(e.target.value)}
-                      placeholder="1.0.0"
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <VersionInput
+                    label={t("create.packVersion")}
+                    value={packVersion}
+                    onChange={setPackVersion}
+                  />
+                  <p className="text-[11px] text-muted-foreground">{t("create.packVersionHint")}</p>
                 </div>
                 <div className="space-y-1">
                   <Slider

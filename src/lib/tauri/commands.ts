@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { Info as BranchInfo } from "@/types/branch";
 import type { Id, Input, Instance } from "@/types/instance";
 import type { Collection } from "@/types/mod-collection";
 import type { Manifest } from "@/types/modpack";
@@ -41,6 +42,14 @@ export function launchInstance(id: Id): Promise<void> {
 /** Set (or replace) an instance's icon from a local image file path. */
 export function setInstanceIcon(id: Id, srcPath: string): Promise<Instance> {
   return invoke<Instance>("set_instance_icon", { id, srcPath });
+}
+
+/**
+ * List the Project Zomboid Steam branches. The backend degrades to a static
+ * fallback on any failure, so this always resolves to a non-empty list.
+ */
+export function listBranches(): Promise<BranchInfo[]> {
+  return invoke<BranchInfo[]>("list_branches");
 }
 
 /** List the mod collection for an instance. */
