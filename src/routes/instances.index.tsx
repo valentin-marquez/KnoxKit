@@ -189,7 +189,18 @@ function MorphTrigger({
       layoutId={morphId}
       type="button"
       onClick={onOpen}
-      transition={anim.spring}
+      // On close the panel unmounts and this button remounts under the same
+      // layoutId, so Motion springs it *down from the panel's full size*. A
+      // fast blur+fade-in masks that reverse collapse so it reads as the
+      // panel resolving back into the button instead of a giant button
+      // shrinking. (Harmless one-off fade on first paint too.)
+      initial={{ opacity: 0, filter: "blur(8px)" }}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      transition={{
+        ...anim.snappy,
+        opacity: { duration: 0.16, ease: "easeOut" },
+        filter: { duration: 0.2, ease: "easeOut" },
+      }}
       style={{ borderRadius: 8 }}
       className="btn btn-primary h-8 gap-1.5 px-3 text-xs"
     >
@@ -367,10 +378,16 @@ function CreateDialog({
             aria-label={t("library.new")}
             // Layout (size/radius) rides the spring; the blur runs as a short
             // tween so the button→panel deformation is smeared out and never
-            // reads as a stretch, then resolves fully sharp.
+            // reads as a stretch, then resolves fully sharp. On close the panel
+            // also fades + blurs harder on its own fast tween so it dissolves
+            // while it shrinks instead of visibly squashing into the button.
             initial={{ filter: "blur(14px)" }}
-            animate={{ filter: "blur(0px)" }}
-            exit={{ filter: "blur(14px)" }}
+            animate={{ filter: "blur(0px)", opacity: 1 }}
+            exit={{
+              filter: "blur(22px)",
+              opacity: 0,
+              transition: { duration: 0.18, ease: "easeIn" },
+            }}
             transition={{ ...anim.spring, filter: { duration: 0.26, ease: "easeOut" } }}
             style={{ borderRadius: 12 }}
             className="relative w-full max-w-lg overflow-hidden border border-border bg-card p-5 text-card-foreground shadow-2xl"
@@ -378,7 +395,13 @@ function CreateDialog({
             <motion.div
               initial={{ opacity: 0, filter: "blur(8px)" }}
               animate={{ opacity: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, filter: "blur(8px)" }}
+              // Drop the form near-instantly on close so its text is gone
+              // before the panel shrink can read as a squash.
+              exit={{
+                opacity: 0,
+                filter: "blur(8px)",
+                transition: { duration: 0.1, ease: "easeIn" },
+              }}
               transition={{ ...anim.snappy, filter: { duration: 0.26, ease: "easeOut" } }}
             >
               <h2 className="text-lg font-semibold leading-none tracking-tight">

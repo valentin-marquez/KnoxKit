@@ -127,7 +127,7 @@ export function Select({
   }
 
   return (
-    <div ref={rootRef} className="relative inline-flex">
+    <div ref={rootRef} className="relative inline-flex min-w-0 max-w-full">
       <button
         ref={triggerRef}
         type="button"
@@ -137,17 +137,17 @@ export function Select({
         onClick={() => (open ? close(true) : openList())}
         onKeyDown={onTriggerKeyDown}
         className={cn(
-          "inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card pl-3 pr-2 text-xs transition-colors hover:border-ring/50 focus-visible:border-ring focus-visible:outline-none",
+          "inline-flex h-8 min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card pl-3 pr-2 text-xs transition-colors hover:border-ring/50 focus-visible:border-ring focus-visible:outline-none",
           open && "border-ring",
           className,
         )}
       >
-        {label && <span className="text-muted-foreground">{label}</span>}
-        <span className="font-medium text-foreground">{selected?.label ?? ""}</span>
+        {label && <span className="shrink-0 text-muted-foreground">{label}</span>}
+        <span className="truncate font-medium text-foreground">{selected?.label ?? ""}</span>
         <ChevronDown
           size={14}
           className={cn(
-            "text-muted-foreground transition-transform duration-150",
+            "shrink-0 text-muted-foreground transition-transform duration-150",
             open && "rotate-180",
           )}
         />
@@ -158,7 +158,7 @@ export function Select({
           id={listboxId}
           role="listbox"
           aria-label={label}
-          className="absolute left-0 top-[calc(100%+4px)] z-50 max-h-60 min-w-full overflow-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+          className="absolute left-0 top-[calc(100%+4px)] z-50 max-h-60 min-w-full max-w-full overflow-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
         >
           {options.map((opt, index) => {
             const isSelected = opt.value === value;
@@ -189,7 +189,7 @@ export function Select({
                     isSelected ? "bg-primary" : "bg-transparent",
                   )}
                 />
-                <span className="truncate">{opt.label}</span>
+                <span className="line-clamp-2 min-w-0">{opt.label}</span>
               </button>
             );
           })}
