@@ -41,9 +41,12 @@ pub async fn import_collection(
     disk::write_mods(&instance_id, &coll)?;
 
     // TODO(review): collection fan-out needs Workshop API
-    jobs.send(job::Job::DownloadMod { workshop_id: r.id })
-        .await
-        .map_err(|e| Error::Steamcmd(format!("failed to enqueue download job: {e}")))?;
+    jobs.send(job::Job::DownloadMod {
+        workshop_id: r.id,
+        instance_id: Some(instance_id.clone()),
+    })
+    .await
+    .map_err(|e| Error::Steamcmd(format!("failed to enqueue download job: {e}")))?;
     Ok(())
 }
 

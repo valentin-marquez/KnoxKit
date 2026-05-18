@@ -54,9 +54,21 @@ pub fn run() {
             let steamcmd_exe =
                 std::env::var("KNOXKIT_STEAMCMD").unwrap_or_else(|_| "steamcmd".to_string());
 
+            // SteamCMD writes `workshop_download_item 108600 <id>` content to
+            // `<steamcmd dir>/steamapps/workshop/content/108600/<id>/`. Derive
+            // that content root from the resolved exe path so the worker can
+            // relocate finished downloads into the shared cache.
+            let content_root = std::path::Path::new(&steamcmd_exe)
+                .parent()
+                .unwrap_or_else(|| std::path::Path::new("."))
+                .join("steamapps")
+                .join("workshop")
+                .join("content")
+                .join("108600");
+
             if let Some(rx) = job_rx.lock().ok().and_then(|mut g| g.take()) {
                 let process = ChildProcess::new(steamcmd_exe);
-                let worker = Worker::new(process, emitter);
+                let worker = Worker::new(process, emitter, content_root);
                 tauri::async_runtime::spawn(async move {
                     worker.run(rx).await;
                 });

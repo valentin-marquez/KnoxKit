@@ -1,0 +1,9 @@
+# Brita Armor module
+name=Brita Armor Pack
+
+id=BritaArmor
+=stray line with leading equals
+poster = armor.png 
+; semicolon comment style
+description=Armor add-on.
+id=BritaArmorFinal

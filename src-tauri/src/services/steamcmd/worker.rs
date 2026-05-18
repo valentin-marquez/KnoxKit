@@ -13,6 +13,7 @@ use tokio::sync::mpsc;
 use crate::error::{Error, Result};
 use crate::events::{self, Emitter};
 use crate::services::steamcmd::{job, parser};
+use crate::services::workshop::cache;
 
 /// Channel half callers use to submit jobs to the worker.
 pub type JobSender = mpsc::Sender<job::Job>;
@@ -125,19 +126,30 @@ impl Process for ChildProcess {
     }
 }
 
-/// The SteamCMD worker. Owns the job receiver, a [`Process`], and an
-/// [`Emitter`]; runs an async loop translating jobs into emitted events.
+/// The SteamCMD worker. Owns the job receiver, a [`Process`], an
+/// [`Emitter`], and the SteamCMD content root; runs an async loop
+/// translating jobs into emitted events.
 pub struct Worker<P: Process, E: Emitter> {
     /// The driven process.
     process: P,
     /// Where IPC events go.
     emitter: E,
+    /// SteamCMD's PZ workshop content root
+    /// (`<steamcmd>/steamapps/workshop/content/108600`). After a successful
+    /// download the item lives at `<content_root>/<workshop_id>/`; the
+    /// worker relocates it from there into the shared cache.
+    content_root: std::path::PathBuf,
 }
 
 impl<P: Process, E: Emitter> Worker<P, E> {
-    /// Build a worker around `process` and `emitter`.
-    pub fn new(process: P, emitter: E) -> Self {
-        Self { process, emitter }
+    /// Build a worker around `process`, `emitter`, and the SteamCMD content
+    /// root (where `workshop_download_item` writes; see [`Worker`]).
+    pub fn new(process: P, emitter: E, content_root: impl Into<std::path::PathBuf>) -> Self {
+        Self {
+            process,
+            emitter,
+            content_root: content_root.into(),
+        }
     }
 
     /// Run the worker loop until a [`job::Job::Shutdown`] is received or the
@@ -180,10 +192,12 @@ impl<P: Process, E: Emitter> Worker<P, E> {
 
     /// Drive a single job to completion, emitting progress/terminal events.
     async fn run_job(&mut self, job: &job::Job) -> Result<()> {
-        let workshop_id = match job {
-            job::Job::DownloadMod { workshop_id } | job::Job::VerifyMod { workshop_id } => {
-                *workshop_id
-            }
+        let (workshop_id, instance_id) = match job {
+            job::Job::DownloadMod {
+                workshop_id,
+                instance_id,
+            } => (*workshop_id, instance_id.clone()),
+            job::Job::VerifyMod { workshop_id } => (*workshop_id, None),
             job::Job::Shutdown => return Ok(()),
         };
         let job_id = job.correlation_id();
@@ -229,6 +243,16 @@ impl<P: Process, E: Emitter> Worker<P, E> {
                     });
                 }
                 parser::Event::DownloadSuccess { .. } => {
+                    // The parsed path is advisory; trust the worker's known
+                    // content root + workshop id. Relocate the freshly
+                    // downloaded tree into the shared cache, then (if a
+                    // requesting instance was carried) junction it in.
+                    // Any failure here is a job failure → existing
+                    // retry/JobFailed path handles it.
+                    cache::ingest(&self.content_root, workshop_id)?;
+                    if let Some(ref iid) = instance_id {
+                        cache::link_into_instance(workshop_id, iid)?;
+                    }
                     self.emitter.emit(events::Event::SteamcmdProgress {
                         job_id: job_id.clone(),
                         stage: "complete".to_string(),
@@ -254,7 +278,23 @@ impl<P: Process, E: Emitter> Worker<P, E> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::paths;
     use std::sync::{Arc, Mutex};
+
+    /// Stage a fake completed download at `<content_root>/<workshop_id>/`
+    /// (with a nested `mods/<Name>/mod.info`) so the worker's post-success
+    /// `cache::ingest` has a real tree to relocate. Returns the content root.
+    fn stage_download(base: &std::path::Path, workshop_id: u64) -> std::path::PathBuf {
+        let content_root = base.join("steamcmd_content");
+        let modinfo_dir = content_root
+            .join(workshop_id.to_string())
+            .join("mods")
+            .join("SomeMod");
+        std::fs::create_dir_all(&modinfo_dir).expect("mkdir content");
+        std::fs::write(modinfo_dir.join("mod.info"), "name=Some\nid=SomeMod\n")
+            .expect("write mod.info");
+        content_root
+    }
 
     /// A scripted process: pops queued lines, optionally simulating one crash
     /// (EOF) before replaying its script.
@@ -313,8 +353,25 @@ mod tests {
         }
     }
 
+    // These tests drive `worker.run`, which on `DownloadSuccess` performs
+    // `cache::ingest` (reads `KNOXKIT_DATA_DIR` via `paths`). The std
+    // `MutexGuard` is intentionally held across the `worker.run` await to
+    // serialize the process-global `KNOXKIT_DATA_DIR`; `#[tokio::test]`
+    // runs on a single-threaded runtime so the guard never crosses threads.
+
+    #[allow(clippy::await_holding_lock)]
     #[tokio::test]
-    async fn download_job_emits_started_progress_complete() {
+    async fn download_job_ingests_and_emits_started_progress_complete() {
+        let _guard = paths::TEST_ENV_LOCK
+            .lock()
+            .unwrap_or_else(|p| p.into_inner());
+        let tmp = tempfile::tempdir().expect("tempdir");
+        // SAFETY: TEST_ENV_LOCK serializes env-var mutating tests.
+        unsafe {
+            std::env::set_var(paths::DATA_DIR_ENV, tmp.path());
+        }
+        let content_root = stage_download(tmp.path(), 12345);
+
         let script = vec![
             "Loading Steam API...OK".to_string(),
             "Logged in OK".to_string(),
@@ -324,12 +381,16 @@ mod tests {
         ];
         let proc = MockProcess::new(vec![script]);
         let emitter = CaptureEmitter::default();
-        let worker = Worker::new(proc, emitter.clone());
+        // instance_id: None → ingest into cache, skip the per-instance link.
+        let worker = Worker::new(proc, emitter.clone(), &content_root);
 
         let (tx, rx) = mpsc::channel(4);
-        tx.send(job::Job::DownloadMod { workshop_id: 12345 })
-            .await
-            .expect("send");
+        tx.send(job::Job::DownloadMod {
+            workshop_id: 12345,
+            instance_id: None,
+        })
+        .await
+        .expect("send");
         tx.send(job::Job::Shutdown).await.expect("send shutdown");
         drop(tx);
         worker.run(rx).await;
@@ -343,10 +404,87 @@ mod tests {
             })
             .collect();
         assert_eq!(stages, vec!["started", "downloading", "complete"]);
+        // The download actually landed in the shared cache.
+        let cached = paths::workshop_cache_dir()
+            .expect("cache dir")
+            .join("12345");
+        assert!(
+            cached.join("mods").join("SomeMod").join("mod.info").exists(),
+            "downloaded content should have been ingested into the cache"
+        );
+
+        unsafe {
+            std::env::remove_var(paths::DATA_DIR_ENV);
+        }
     }
 
+    #[allow(clippy::await_holding_lock)]
+    #[tokio::test]
+    async fn download_job_links_into_requesting_instance() {
+        let _guard = paths::TEST_ENV_LOCK
+            .lock()
+            .unwrap_or_else(|p| p.into_inner());
+        let tmp = tempfile::tempdir().expect("tempdir");
+        unsafe {
+            std::env::set_var(paths::DATA_DIR_ENV, tmp.path());
+        }
+        let content_root = stage_download(tmp.path(), 555);
+
+        let script = vec![
+            "Logged in OK".to_string(),
+            "Downloading item 555 ...".to_string(),
+            "Success. Downloaded item 555 to \"C:\\x\" (1 bytes)".to_string(),
+        ];
+        let proc = MockProcess::new(vec![script]);
+        let emitter = CaptureEmitter::default();
+        let worker = Worker::new(proc, emitter.clone(), &content_root);
+
+        let (tx, rx) = mpsc::channel(4);
+        tx.send(job::Job::DownloadMod {
+            workshop_id: 555,
+            instance_id: Some("inst-link".to_string()),
+        })
+        .await
+        .expect("send");
+        tx.send(job::Job::Shutdown).await.expect("send shutdown");
+        drop(tx);
+        worker.run(rx).await;
+
+        let evs = emitter.events.lock().expect("lock").clone();
+        assert!(
+            evs.iter().any(|e| matches!(
+                e,
+                events::Event::SteamcmdProgress { stage, .. } if stage == "complete"
+            )),
+            "expected complete event, got {evs:?}"
+        );
+        let junction = paths::instances_dir()
+            .expect("instances dir")
+            .join("inst-link")
+            .join("workshop")
+            .join("555");
+        assert!(
+            junction.join("mods").join("SomeMod").join("mod.info").exists(),
+            "instance junction should resolve into the cached content"
+        );
+
+        unsafe {
+            std::env::remove_var(paths::DATA_DIR_ENV);
+        }
+    }
+
+    #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn crash_then_recover_succeeds_on_retry() {
+        let _guard = paths::TEST_ENV_LOCK
+            .lock()
+            .unwrap_or_else(|p| p.into_inner());
+        let tmp = tempfile::tempdir().expect("tempdir");
+        unsafe {
+            std::env::set_var(paths::DATA_DIR_ENV, tmp.path());
+        }
+        let content_root = stage_download(tmp.path(), 7);
+
         // Attempt 1: process dies after login (EOF). Attempt 2: full success.
         let crash = vec!["Logged in OK".to_string()];
         let ok = vec![
@@ -356,12 +494,15 @@ mod tests {
         ];
         let proc = MockProcess::new(vec![crash, ok]);
         let emitter = CaptureEmitter::default();
-        let worker = Worker::new(proc, emitter.clone());
+        let worker = Worker::new(proc, emitter.clone(), &content_root);
 
         let (tx, rx) = mpsc::channel(4);
-        tx.send(job::Job::DownloadMod { workshop_id: 7 })
-            .await
-            .expect("send");
+        tx.send(job::Job::DownloadMod {
+            workshop_id: 7,
+            instance_id: None,
+        })
+        .await
+        .expect("send");
         tx.send(job::Job::Shutdown).await.expect("send");
         drop(tx);
         worker.run(rx).await;
@@ -377,19 +518,27 @@ mod tests {
                 .any(|e| matches!(e, events::Event::JobFailed { .. })),
             "should not have failed terminally"
         );
+
+        unsafe {
+            std::env::remove_var(paths::DATA_DIR_ENV);
+        }
     }
 
     #[tokio::test]
     async fn second_failure_emits_job_failed() {
+        // Never reaches DownloadSuccess, so no cache IO / env needed.
         let crash = vec!["Logged in OK".to_string()];
         let proc = MockProcess::new(vec![crash.clone(), crash]);
         let emitter = CaptureEmitter::default();
-        let worker = Worker::new(proc, emitter.clone());
+        let worker = Worker::new(proc, emitter.clone(), std::path::PathBuf::from("unused"));
 
         let (tx, rx) = mpsc::channel(4);
-        tx.send(job::Job::DownloadMod { workshop_id: 9 })
-            .await
-            .expect("send");
+        tx.send(job::Job::DownloadMod {
+            workshop_id: 9,
+            instance_id: None,
+        })
+        .await
+        .expect("send");
         tx.send(job::Job::Shutdown).await.expect("send");
         drop(tx);
         worker.run(rx).await;

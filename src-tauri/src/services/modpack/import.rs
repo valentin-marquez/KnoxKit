@@ -87,6 +87,7 @@ pub async fn run(jobs: &JobSender, pack_path: &str, target_name: &str) -> Result
     for item in &manifest.workshop_items {
         jobs.send(job::Job::DownloadMod {
             workshop_id: item.workshop_id,
+            instance_id: Some(inst.id.clone()),
         })
         .await
         .map_err(|e| Error::Steamcmd(format!("failed to enqueue download job: {e}")))?;
