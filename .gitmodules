@@ -1,0 +1,4 @@
+[submodule "knoxlink"]
+	path = knoxlink
+	url = https://github.com/valentin-marquez/KnoxLink
+	branch = main
