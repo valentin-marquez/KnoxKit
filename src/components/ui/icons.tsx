@@ -8,11 +8,13 @@ import {
   CaretDown,
   CaretLeft,
   CaretRight,
+  CheckCircle as CheckCirclePh,
   DotsThreeVertical,
   DownloadSimple,
   FolderOpen,
   GearSix,
   GridFour,
+  Info as InfoPh,
   MagnifyingGlass,
   Monitor as MonitorPh,
   Moon as MoonPh,
@@ -22,6 +24,7 @@ import {
   Plus as PlusPh,
   Star as StarPh,
   Sun as SunPh,
+  WarningCircle as WarningCirclePh,
 } from "@phosphor-icons/react";
 
 interface IconProps {
@@ -53,6 +56,9 @@ export const Monitor = wrap(MonitorPh);
 export const Plus = wrap(PlusPh, "bold");
 export const Dots = wrap(DotsThreeVertical, "bold");
 export const Refresh = wrap(ArrowClockwise, "bold");
+export const CheckCircle = wrap(CheckCirclePh);
+export const WarningCircle = wrap(WarningCirclePh);
+export const Info = wrap(InfoPh);
 
 export const Star = ({ size = 18, className, filled }: IconProps & { filled?: boolean }) => (
   <StarPh size={size} className={className} weight={filled ? "fill" : "bold"} />

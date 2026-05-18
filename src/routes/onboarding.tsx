@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Folder } from "@/components/ui/icons";
+import { CheckCircle, Download, Folder } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import * as anim from "@/lib/anim";
 import {
   useDetectGamePath,
   useInstallSteamcmd,
@@ -29,13 +30,88 @@ function Spinner() {
   );
 }
 
-/** A small "step complete" check badge. */
-function DoneBadge({ label }: { label: string }) {
+/** Mount entrance: fade + rise with an elastic settle. */
+const rise = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+};
+
+/**
+ * Shared step shell. While `done` is false it shows the interactive
+ * `children`; once done it collapses them away and morphs down to a compact
+ * confirmation line, popping a "ready" badge in with an elastic spring so the
+ * user feels the step click shut.
+ */
+function StepCard({
+  icon,
+  title,
+  doneLabel,
+  done,
+  summary,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  doneLabel: string;
+  done: boolean;
+  summary: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-      <span aria-hidden>✓</span>
-      {label}
-    </span>
+    <motion.div
+      layout
+      transition={anim.spring}
+      variants={rise}
+      className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground"
+    >
+      <motion.div layout="position" className="flex items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-2 text-base font-semibold">
+          {icon}
+          {title}
+        </div>
+        <AnimatePresence>
+          {done && (
+            <motion.span
+              key="badge"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={anim.elastic}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+            >
+              <CheckCircle size={14} />
+              {doneLabel}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      <AnimatePresence initial={false} mode="wait">
+        {done ? (
+          <motion.div
+            key="summary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={anim.snappy}
+            className="px-4 pb-4 text-xs text-muted-foreground"
+          >
+            {summary}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="form"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={anim.spring}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="space-y-3 px-4 pb-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -51,31 +127,40 @@ function OnboardingRoute() {
 
   return (
     <div className="flex h-full items-center justify-center overflow-auto p-6">
-      <div className="w-full max-w-lg space-y-5">
-        <header className="space-y-2 text-center">
-          <div className="flex justify-center">
-            <Brand />
+      <motion.div
+        initial="initial"
+        animate="animate"
+        transition={{ staggerChildren: 0.08 }}
+        className="w-full max-w-lg"
+      >
+        <LayoutGroup>
+          <motion.header variants={rise} className="space-y-2 pb-5 text-center">
+            <div className="flex justify-center">
+              <Brand />
+            </div>
+            <h1 className="font-display text-xl font-bold">{t("onboarding.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
+          </motion.header>
+
+          <div className="space-y-5">
+            <GameStep done={gameDone} />
+            <SteamcmdStep done={steamcmdDone} />
+
+            <motion.div layout transition={anim.spring} className="flex justify-end pt-1">
+              <Button
+                size="lg"
+                disabled={!complete}
+                onClick={() => {
+                  toast({ title: t("onboarding.done"), variant: "success" });
+                  void navigate({ to: "/" });
+                }}
+              >
+                {t("onboarding.continue")}
+              </Button>
+            </motion.div>
           </div>
-          <h1 className="font-display text-xl font-bold">{t("onboarding.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
-        </header>
-
-        <GameStep done={gameDone} />
-        <SteamcmdStep done={steamcmdDone} />
-
-        <div className="flex justify-end pt-1">
-          <Button
-            size="lg"
-            disabled={!complete}
-            onClick={() => {
-              toast({ title: t("onboarding.done"), variant: "success" });
-              void navigate({ to: "/" });
-            }}
-          >
-            {t("onboarding.continue")}
-          </Button>
-        </div>
-      </div>
+        </LayoutGroup>
+      </motion.div>
     </div>
   );
 }
@@ -112,52 +197,51 @@ function GameStep({ done }: { done: boolean }) {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Folder size={18} />
-          {t("onboarding.step1Title")}
-        </CardTitle>
-        {done ? <DoneBadge label={t("onboarding.stepDone")} /> : null}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("onboarding.step1Desc")}</p>
+    <StepCard
+      icon={<Folder size={18} />}
+      title={t("onboarding.step1Title")}
+      doneLabel={t("onboarding.stepDone")}
+      done={done}
+      summary={
+        <span className="break-all font-mono">{save.variables ?? t("onboarding.detected")}</span>
+      }
+    >
+      <p className="text-sm text-muted-foreground">{t("onboarding.step1Desc")}</p>
 
-        <p className="text-xs text-muted-foreground">
-          {detect.isPending
-            ? t("onboarding.detecting")
-            : detect.data
-              ? t("onboarding.detected")
-              : t("onboarding.notDetected")}
-        </p>
+      <p className="text-xs text-muted-foreground">
+        {detect.isPending
+          ? t("onboarding.detecting")
+          : detect.data
+            ? t("onboarding.detected")
+            : t("onboarding.notDetected")}
+      </p>
 
-        <div className="flex gap-2">
-          <Input
-            value={path}
-            onChange={(e) => setPath(e.target.value)}
-            placeholder={t("onboarding.pathPlaceholder")}
-            className="h-9 rounded-lg font-mono text-xs"
-          />
-          <Button variant="outline" size="sm" onClick={() => void browse()}>
-            {t("onboarding.browse")}
-          </Button>
-        </div>
+      <div className="flex gap-2">
+        <Input
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder={t("onboarding.pathPlaceholder")}
+          className="h-9 rounded-lg font-mono text-xs"
+        />
+        <Button variant="outline" size="sm" onClick={() => void browse()}>
+          {t("onboarding.browse")}
+        </Button>
+      </div>
 
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={detect.isPending}
-            onClick={() => detect.mutate(undefined, { onSuccess: (f) => f && setPath(f) })}
-          >
-            {t("onboarding.redetect")}
-          </Button>
-          <Button size="sm" disabled={path.trim() === "" || save.isPending} onClick={persist}>
-            {save.isPending ? t("onboarding.saving") : t("onboarding.save")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={detect.isPending}
+          onClick={() => detect.mutate(undefined, { onSuccess: (f) => f && setPath(f) })}
+        >
+          {t("onboarding.redetect")}
+        </Button>
+        <Button size="sm" disabled={path.trim() === "" || save.isPending} onClick={persist}>
+          {save.isPending ? t("onboarding.saving") : t("onboarding.save")}
+        </Button>
+      </div>
+    </StepCard>
   );
 }
 
@@ -172,44 +256,37 @@ function SteamcmdStep({ done }: { done: boolean }) {
   // install download itself to emit them is deferred.
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Download size={18} />
-          {t("onboarding.step2Title")}
-        </CardTitle>
-        {done ? <DoneBadge label={t("onboarding.stepDone")} /> : null}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("onboarding.step2Desc")}</p>
-        <p className="text-xs text-muted-foreground">
-          {done ? t("onboarding.steamcmdFound") : t("onboarding.steamcmdMissing")}
-        </p>
+    <StepCard
+      icon={<Download size={18} />}
+      title={t("onboarding.step2Title")}
+      doneLabel={t("onboarding.stepDone")}
+      done={done}
+      summary={t("onboarding.steamcmdFound")}
+    >
+      <p className="text-sm text-muted-foreground">{t("onboarding.step2Desc")}</p>
+      <p className="text-xs text-muted-foreground">{t("onboarding.steamcmdMissing")}</p>
 
-        {done ? null : (
-          <div className="flex justify-end">
-            <Button
-              size="sm"
-              disabled={install.isPending}
-              onClick={() =>
-                install.mutate(undefined, {
-                  onError: () =>
-                    toast({ title: t("onboarding.errorSteamcmd"), variant: "destructive" }),
-                })
-              }
-            >
-              {install.isPending ? (
-                <span className="flex items-center gap-2">
-                  <Spinner />
-                  {t("onboarding.installing")}
-                </span>
-              ) : (
-                t("onboarding.install")
-              )}
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          disabled={install.isPending}
+          onClick={() =>
+            install.mutate(undefined, {
+              onError: () =>
+                toast({ title: t("onboarding.errorSteamcmd"), variant: "destructive" }),
+            })
+          }
+        >
+          {install.isPending ? (
+            <span className="flex items-center gap-2">
+              <Spinner />
+              {t("onboarding.installing")}
+            </span>
+          ) : (
+            t("onboarding.install")
+          )}
+        </Button>
+      </div>
+    </StepCard>
   );
 }

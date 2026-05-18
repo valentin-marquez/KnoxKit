@@ -29,6 +29,13 @@ function RootComponent() {
     }
   }, [needsOnboarding, onOnboarding, navigate]);
 
+  // Don't paint the app chrome (sidebar/topbar/status bar) until first-run
+  // setup is done: while the status is still loading, on the onboarding
+  // screen, or in the brief window before the redirect effect fires.
+  if (setup.isPending || onOnboarding || needsOnboarding) {
+    return <Outlet />;
+  }
+
   return (
     <RootLayout>
       <Outlet />
