@@ -1,4 +1,7 @@
+import { AnimatePresence, motion } from "motion/react";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { CheckCircle, Info, WarningCircle } from "@/components/ui/icons";
+import * as anim from "@/lib/anim";
 import { cn } from "@/lib/utils";
 
 type ToastVariant = "default" | "success" | "destructive";
@@ -24,8 +27,14 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantClasses: Record<ToastVariant, string> = {
   default: "border-border bg-card text-card-foreground",
-  success: "border-primary/40 bg-card text-card-foreground",
-  destructive: "border-destructive/50 bg-destructive text-destructive-foreground",
+  success: "border-primary/50 bg-card text-card-foreground",
+  destructive: "border-destructive/60 bg-destructive text-destructive-foreground",
+};
+
+const variantIcon: Record<ToastVariant, React.ReactNode> = {
+  default: <Info size={18} className="text-muted-foreground" />,
+  success: <CheckCircle size={18} className="text-primary" />,
+  destructive: <WarningCircle size={18} className="text-destructive-foreground" />,
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -50,30 +59,41 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            role="status"
-            className={cn(
-              "pointer-events-auto rounded-md border p-4 shadow-md",
-              variantClasses[t.variant],
-            )}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium">{t.title}</p>
+      <div
+        aria-live="polite"
+        className="pointer-events-none fixed bottom-5 right-5 z-50 flex w-80 flex-col gap-2"
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              layout
+              initial={{ opacity: 0, x: 48, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 48, scale: 0.85 }}
+              transition={anim.snappy}
+              role={t.variant === "destructive" ? "alert" : "status"}
+              className={cn(
+                "pointer-events-auto flex items-start gap-3 rounded-lg border p-3.5 shadow-lg",
+                variantClasses[t.variant],
+              )}
+            >
+              <span className="mt-0.5 shrink-0">{variantIcon[t.variant]}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{t.title}</p>
+                {t.description ? <p className="mt-1 text-xs opacity-80">{t.description}</p> : null}
+              </div>
               <button
                 type="button"
                 aria-label="Dismiss"
-                className="text-xs opacity-60 hover:opacity-100"
+                className="-mr-1 -mt-1 shrink-0 rounded p-1 text-xs opacity-60 transition-opacity hover:opacity-100"
                 onClick={() => dismiss(t.id)}
               >
                 ✕
               </button>
-            </div>
-            {t.description ? <p className="mt-1 text-xs opacity-80">{t.description}</p> : null}
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );
