@@ -65,7 +65,18 @@
     "branchOutdated": "Inestable antigua — Build 42",
     "build": "Build (opcional)",
     "buildHint": "Solo referencial — KnoxKit no puede cambiar la rama que tení instalada en Steam.",
+    "ram": "RAM máxima",
+    "ramHint": "Heap por instancia; sobrescribe el valor global.",
+    "ramOf": "{{value}} de {{total}} GB",
     "creating": "Creando…"
+  },
+  "profile": {
+    "title": "Perfil",
+    "username": "Usuario multijugador",
+    "usernameHint": "Autocompleta las conexiones a servers. No se guarda ninguna contraseña.",
+    "usernamePlaceholder": "Tu nombre en el juego",
+    "save": "Guardar",
+    "saved": "Guardado"
   },
   "instance": {
     "play": "Jugar",
@@ -161,7 +172,11 @@
     "continue": "Entrar a KnoxKit",
     "errorGame": "Esa ruta no es una carpeta válida de Project Zomboid.",
     "errorSteamcmd": "No se pudo instalar SteamCMD. Revisa tu conexión y reintenta.",
-    "stepDone": "Listo"
+    "stepDone": "Listo",
+    "profileTitle": "Tu nombre de jugador (opcional)",
+    "profileDesc": "Se usa pa' autocompletar las conexiones multijugador después. Lo podí cambiar cuando querái en Perfil.",
+    "profilePlaceholder": "Tu nombre en el juego",
+    "profileSkip": "Saltar por ahora"
   },
   "theme": {
     "light": "Claro",

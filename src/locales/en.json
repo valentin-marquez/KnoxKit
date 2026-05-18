@@ -60,7 +60,18 @@
     "branchOutdated": "Outdated Unstable — Build 42",
     "build": "Build (optional)",
     "buildHint": "Advisory only — KnoxKit cannot change Steam's installed branch.",
+    "ram": "Max RAM",
+    "ramHint": "Per-instance heap; overrides the global default.",
+    "ramOf": "{{value}} of {{total}} GB",
     "creating": "Creating…"
+  },
+  "profile": {
+    "title": "Profile",
+    "username": "Multiplayer username",
+    "usernameHint": "Pre-fills server connections. No password is stored.",
+    "usernamePlaceholder": "Your in-game name",
+    "save": "Save",
+    "saved": "Saved"
   },
   "instance": {
     "play": "Play",
@@ -151,7 +162,11 @@
     "continue": "Continue to KnoxKit",
     "errorGame": "That path is not a valid Project Zomboid folder.",
     "errorSteamcmd": "Could not install SteamCMD. Check your connection and retry.",
-    "stepDone": "Done"
+    "stepDone": "Done",
+    "profileTitle": "Your player name (optional)",
+    "profileDesc": "Used to pre-fill multiplayer connections later. You can change it anytime in Profile.",
+    "profilePlaceholder": "Your in-game name",
+    "profileSkip": "Skip for now"
   },
   "theme": {
     "light": "Light",

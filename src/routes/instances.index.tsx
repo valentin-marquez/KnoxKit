@@ -8,9 +8,10 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Plus, Search } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/toast";
 import * as anim from "@/lib/anim";
-import { useCreateInstance, useInstances } from "@/lib/queries";
+import { useCreateInstance, useInstances, useSystemRam } from "@/lib/queries";
 import type { Branch, Instance } from "@/types/instance";
 
 /** The `layoutId` shared between the trigger button and the dialog panel. */
@@ -179,16 +180,34 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const { t } = useTranslation();
   const { toast } = useToast();
   const create = useCreateInstance();
+  const { data: ram } = useSystemRam();
   const [name, setName] = useState("");
   const [branch, setBranch] = useState<BranchChoice>("Stable");
   const [build, setBuild] = useState("");
+  // `null` ⇒ the user has not moved the slider yet; submit then sends the
+  // backend default (`max_ram_mb` omitted). Once dragged it holds MB.
+  const [ramMb, setRamMb] = useState<number | null>(null);
   const nameId = useId();
   const buildId = useId();
+
+  // Effective slider position in MB: the user's pick, else the machine
+  // recommended default, else a safe floor until the snapshot arrives.
+  const sliderMb = ramMb ?? ram?.default_mb ?? ram?.min_mb ?? 2048;
+  const totalMb = ram?.total_mb ?? sliderMb;
+  const ratio = totalMb > 0 ? sliderMb / totalMb : 0;
+  const tone: "normal" | "warn" | "danger" =
+    ratio > 0.85 ? "danger" : ratio > 0.7 ? "warn" : "normal";
+  // The `create.ramOf` locale key formats GB ("{{value}} of {{total}} GB").
+  const ramValueText = t("create.ramOf", {
+    value: (sliderMb / 1024).toFixed(1).replace(/\.0$/, ""),
+    total: (totalMb / 1024).toFixed(1).replace(/\.0$/, ""),
+  });
 
   const reset = () => {
     setName("");
     setBranch("Stable");
     setBuild("");
+    setRamMb(null);
   };
 
   // Close on Escape and lock background scroll while the panel is mounted.
@@ -212,6 +231,9 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
       {
         name: trimmedName,
         game_version: { branch: wireBranch, build: trimmedBuild === "" ? null : trimmedBuild },
+        // Only send an explicit cap when the user actually chose one;
+        // otherwise the backend applies its machine default (and clamps).
+        max_ram_mb: ramMb,
       },
       {
         onSuccess: (instance) => {
@@ -317,6 +339,20 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
                     placeholder="41.78.16"
                   />
                   <p className="text-[11px] text-muted-foreground">{t("create.buildHint")}</p>
+                </div>
+                <div className="space-y-1">
+                  <Slider
+                    label={t("create.ram")}
+                    valueText={ramValueText}
+                    value={sliderMb}
+                    min={ram?.min_mb ?? 2048}
+                    max={totalMb}
+                    step={512}
+                    tone={tone}
+                    disabled={!ram}
+                    onChange={setRamMb}
+                  />
+                  <p className="text-[11px] text-muted-foreground">{t("create.ramHint")}</p>
                 </div>
                 {/* TODO(review): show a detected-branch-vs-intended warning
                     here once an appmanifest_108600.acf reader exists (no

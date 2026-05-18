@@ -4,6 +4,7 @@ import type { Collection } from "@/types/mod-collection";
 import type { Manifest } from "@/types/modpack";
 import type { Patch, Settings } from "@/types/settings";
 import type { Status as SetupStatus } from "@/types/setup";
+import type { Ram } from "@/types/system";
 import type { WorkshopRef } from "@/types/workshop";
 
 /**
@@ -55,6 +56,11 @@ export function toggleMod(instanceId: Id, workshopId: number, enabled: boolean):
 /** Parse a Steam Workshop URL into a workshop reference. */
 export function parseWorkshopUrl(url: string): Promise<WorkshopRef> {
   return invoke<WorkshopRef>("parse_workshop_url", { url });
+}
+
+/** Read this machine's physical-RAM snapshot for the heap slider. */
+export function getSystemRam(): Promise<Ram> {
+  return invoke<Ram>("get_system_ram");
 }
 
 /** Read the application settings. */

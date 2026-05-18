@@ -15,6 +15,7 @@ import {
   getInstance,
   getSettings,
   getSetupStatus,
+  getSystemRam,
   installSteamcmd,
   launchInstance,
   listInstances,
@@ -28,6 +29,7 @@ import type { Id, Input, Instance } from "@/types/instance";
 import type { Collection } from "@/types/mod-collection";
 import type { Patch, Settings } from "@/types/settings";
 import type { Status as SetupStatus } from "@/types/setup";
+import type { Ram } from "@/types/system";
 
 /** Centralized query keys — every hook and invalidation reads from here. */
 export const keys = {
@@ -36,6 +38,7 @@ export const keys = {
   mods: (id: Id) => ["mods", id] as const,
   settings: ["settings"] as const,
   setup: ["setup"] as const,
+  systemRam: ["system", "ram"] as const,
 };
 
 /** All known instances. */
@@ -88,6 +91,19 @@ export function useDeleteInstance() {
 export function useLaunchInstance() {
   return useMutation<void, Error, Id>({
     mutationFn: (id) => launchInstance(id),
+  });
+}
+
+/**
+ * This machine's physical-RAM snapshot (drives the create dialog's heap
+ * slider). Effectively static for a session, so it never refetches on its
+ * own — the default staleness is fine and there is no mutation to invalidate.
+ */
+export function useSystemRam() {
+  return useQuery<Ram>({
+    queryKey: keys.systemRam,
+    queryFn: getSystemRam,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
