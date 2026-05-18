@@ -3,6 +3,7 @@ import type { Id, Input, Instance } from "@/types/instance";
 import type { Collection } from "@/types/mod-collection";
 import type { Manifest } from "@/types/modpack";
 import type { Patch, Settings } from "@/types/settings";
+import type { Status as SetupStatus } from "@/types/setup";
 import type { WorkshopRef } from "@/types/workshop";
 
 /**
@@ -79,4 +80,29 @@ export function importModpack(packPath: string, targetName: string): Promise<Id>
 /** Validate a .knoxpack file and return its manifest. */
 export function validateModpack(packPath: string): Promise<Manifest> {
   return invoke<Manifest>("validate_modpack", { packPath });
+}
+
+/** Read the first-run onboarding status (derived from settings). */
+export function getSetupStatus(): Promise<SetupStatus> {
+  return invoke<SetupStatus>("get_setup_status");
+}
+
+/** Auto-detect the Project Zomboid install path (Steam scan); null if absent. */
+export function detectGamePath(): Promise<string | null> {
+  return invoke<string | null>("detect_game_path");
+}
+
+/** Validate + persist the Project Zomboid install path; returns new status. */
+export function setGamePath(path: string): Promise<SetupStatus> {
+  return invoke<SetupStatus>("set_game_path", { path });
+}
+
+/** Resolve an already-available SteamCMD path; null if none is installed. */
+export function detectSteamcmd(): Promise<string | null> {
+  return invoke<string | null>("detect_steamcmd");
+}
+
+/** Install SteamCMD in-app (download + extract + bootstrap); returns its path. */
+export function installSteamcmd(): Promise<string> {
+  return invoke<string>("install_steamcmd");
 }

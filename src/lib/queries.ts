@@ -10,17 +10,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createInstance,
   deleteInstance,
+  detectGamePath,
+  detectSteamcmd,
   getInstance,
   getSettings,
+  getSetupStatus,
+  installSteamcmd,
   launchInstance,
   listInstances,
   listMods,
+  setGamePath,
   toggleMod,
   updateSettings,
 } from "@/lib/tauri/commands";
 import type { Id, Input, Instance } from "@/types/instance";
 import type { Collection } from "@/types/mod-collection";
 import type { Patch, Settings } from "@/types/settings";
+import type { Status as SetupStatus } from "@/types/setup";
 
 /** Centralized query keys — every hook and invalidation reads from here. */
 export const keys = {
@@ -28,6 +34,7 @@ export const keys = {
   instance: (id: Id) => ["instance", id] as const,
   mods: (id: Id) => ["mods", id] as const,
   settings: ["settings"] as const,
+  setup: ["setup"] as const,
 };
 
 /** All known instances. */
@@ -114,6 +121,52 @@ export function useToggleMod(instanceId: Id) {
     mutationFn: ({ workshopId, enabled }) => toggleMod(instanceId, workshopId, enabled),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.mods(instanceId) });
+    },
+  });
+}
+
+/** First-run onboarding status (drives the hard gate). */
+export function useSetupStatus() {
+  return useQuery<SetupStatus>({
+    queryKey: keys.setup,
+    queryFn: getSetupStatus,
+  });
+}
+
+/** Auto-detect the PZ install path (read-only; does not persist). */
+export function useDetectGamePath() {
+  return useMutation<string | null, Error, void>({
+    mutationFn: () => detectGamePath(),
+  });
+}
+
+/** Resolve an already-available SteamCMD path (read-only). */
+export function useDetectSteamcmd() {
+  return useMutation<string | null, Error, void>({
+    mutationFn: () => detectSteamcmd(),
+  });
+}
+
+/** Validate + persist the PZ path, then refresh setup status and settings. */
+export function useSetGamePath() {
+  const qc = useQueryClient();
+  return useMutation<SetupStatus, Error, string>({
+    mutationFn: (path) => setGamePath(path),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.setup });
+      qc.invalidateQueries({ queryKey: keys.settings });
+    },
+  });
+}
+
+/** Install SteamCMD in-app, then refresh setup status and settings. */
+export function useInstallSteamcmd() {
+  const qc = useQueryClient();
+  return useMutation<string, Error, void>({
+    mutationFn: () => installSteamcmd(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.setup });
+      qc.invalidateQueries({ queryKey: keys.settings });
     },
   });
 }

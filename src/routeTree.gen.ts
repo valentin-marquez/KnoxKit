@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings.index'
 import { Route as ModsIndexRouteImport } from './routes/mods.index'
@@ -16,6 +17,11 @@ import { Route as InstancesIndexRouteImport } from './routes/instances.index'
 import { Route as ModpackImportRouteImport } from './routes/modpack.import'
 import { Route as InstancesIdRouteImport } from './routes/instances.$id'
 
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const InstancesIdRoute = InstancesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/instances/$id': typeof InstancesIdRoute
   '/modpack/import': typeof ModpackImportRoute
   '/instances/': typeof InstancesIndexRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/instances/$id': typeof InstancesIdRoute
   '/modpack/import': typeof ModpackImportRoute
   '/instances': typeof InstancesIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/instances/$id': typeof InstancesIdRoute
   '/modpack/import': typeof ModpackImportRoute
   '/instances/': typeof InstancesIndexRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/onboarding'
     | '/instances/$id'
     | '/modpack/import'
     | '/instances/'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/onboarding'
     | '/instances/$id'
     | '/modpack/import'
     | '/instances'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/onboarding'
     | '/instances/$id'
     | '/modpack/import'
     | '/instances/'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OnboardingRoute: typeof OnboardingRoute
   InstancesIdRoute: typeof InstancesIdRoute
   ModpackImportRoute: typeof ModpackImportRoute
   InstancesIndexRoute: typeof InstancesIndexRoute
@@ -110,6 +123,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OnboardingRoute: OnboardingRoute,
   InstancesIdRoute: InstancesIdRoute,
   ModpackImportRoute: ModpackImportRoute,
   InstancesIndexRoute: InstancesIndexRoute,

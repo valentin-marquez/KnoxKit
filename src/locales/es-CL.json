@@ -123,6 +123,31 @@
       "hint": "Suelta un archivo .knoxpack o pega su ruta pa' previsualizarlo."
     }
   },
+  "onboarding": {
+    "title": "Bienvenido a KnoxKit",
+    "subtitle": "Dos cositas rápidas antes de que puedas manejar instancias.",
+    "step1Title": "Ubica Project Zomboid",
+    "step1Desc": "KnoxKit necesita tu instalación de Project Zomboid pa' lanzar y parchar instancias.",
+    "step2Title": "Configura SteamCMD",
+    "step2Desc": "SteamCMD baja los mods del Workshop. KnoxKit te lo puede instalar.",
+    "detecting": "Detectando…",
+    "detected": "Detectado automáticamente",
+    "notDetected": "No se encontró automáticamente — elígelo a mano.",
+    "browse": "Examinar",
+    "redetect": "Detectar de nuevo",
+    "save": "Usar esta ruta",
+    "saving": "Guardando…",
+    "pathPlaceholder": "C:\\…\\steamapps\\common\\ProjectZomboid",
+    "steamcmdFound": "SteamCMD está listo.",
+    "steamcmdMissing": "SteamCMD todavía no está instalado.",
+    "install": "Instalar SteamCMD",
+    "installing": "Instalando SteamCMD… esto puede tardar un minuto",
+    "done": "Todo listo",
+    "continue": "Entrar a KnoxKit",
+    "errorGame": "Esa ruta no es una carpeta válida de Project Zomboid.",
+    "errorSteamcmd": "No se pudo instalar SteamCMD. Revisa tu conexión y reintenta.",
+    "stepDone": "Listo"
+  },
   "theme": {
     "light": "Claro",
     "dark": "Oscuro",
