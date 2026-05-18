@@ -39,16 +39,23 @@ const rise = {
 };
 
 /**
- * Shared step shell. While `done` is false it shows the interactive
- * `children`; once done it collapses them away and morphs down to a compact
- * confirmation line, popping a "ready" badge in with an elastic spring so the
- * user feels the step click shut.
+ * Shared step shell for the progressive stepper. A step is in exactly one of
+ * three states:
+ *
+ * - `locked`  — a prior step is still open. The card is dimmed, dashed and
+ *               collapsed (no form, no badge): the user sees what's coming but
+ *               can't act on it yet. No step numbers — the dimming is the cue.
+ * - active    — neither locked nor done: shows the interactive `children`.
+ * - `done`    — collapses the form away and morphs to a compact confirmation
+ *               line with an elastic "ready" badge, which unlocks the next
+ *               card below.
  */
 function StepCard({
   icon,
   title,
   doneLabel,
   done,
+  locked = false,
   summary,
   children,
 }: {
@@ -56,6 +63,7 @@ function StepCard({
   title: string;
   doneLabel: string;
   done: boolean;
+  locked?: boolean;
   summary: ReactNode;
   children: ReactNode;
 }) {
@@ -64,15 +72,23 @@ function StepCard({
       layout
       transition={anim.spring}
       variants={rise}
-      className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground"
+      aria-disabled={locked}
+      animate={{ opacity: locked ? 0.5 : 1 }}
+      className={`overflow-hidden rounded-xl bg-card text-card-foreground ${
+        locked ? "border border-dashed border-border" : "border border-border"
+      }`}
     >
       <motion.div layout="position" className="flex items-center justify-between gap-3 p-4">
-        <div className="flex items-center gap-2 text-base font-semibold">
+        <div
+          className={`flex items-center gap-2 text-base font-semibold ${
+            locked ? "text-muted-foreground" : ""
+          }`}
+        >
           {icon}
           {title}
         </div>
         <AnimatePresence>
-          {done && (
+          {done && !locked && (
             <motion.span
               key="badge"
               initial={{ scale: 0, opacity: 0 }}
@@ -89,7 +105,7 @@ function StepCard({
       </motion.div>
 
       <AnimatePresence initial={false} mode="wait">
-        {done ? (
+        {locked ? null : done ? (
           <motion.div
             key="summary"
             initial={{ opacity: 0 }}
@@ -146,8 +162,8 @@ function OnboardingRoute() {
 
           <div className="space-y-5">
             <GameStep done={gameDone} />
-            <SteamcmdStep done={steamcmdDone} />
-            <ProfileStep />
+            <SteamcmdStep done={steamcmdDone} locked={!gameDone} />
+            <ProfileStep locked={!steamcmdDone} />
 
             <motion.div layout transition={anim.spring} className="flex justify-end pt-1">
               <Button
@@ -249,7 +265,7 @@ function GameStep({ done }: { done: boolean }) {
 }
 
 /** Step 2 — detected-or-Install SteamCMD. Streamed progress is out of scope. */
-function SteamcmdStep({ done }: { done: boolean }) {
+function SteamcmdStep({ done, locked }: { done: boolean; locked: boolean }) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const install = useInstallSteamcmd();
@@ -264,6 +280,7 @@ function SteamcmdStep({ done }: { done: boolean }) {
       title={t("onboarding.step2Title")}
       doneLabel={t("onboarding.stepDone")}
       done={done}
+      locked={locked}
       summary={t("onboarding.steamcmdFound")}
     >
       <p className="text-sm text-muted-foreground">{t("onboarding.step2Desc")}</p>
@@ -302,7 +319,7 @@ function SteamcmdStep({ done }: { done: boolean }) {
  * separate client gating logic. The name is the authoritative source for every
  * instance's author.
  */
-function ProfileStep() {
+function ProfileStep({ locked }: { locked: boolean }) {
   const { t } = useTranslation();
   const settings = useSettings();
   const update = useUpdateSettings();
@@ -331,6 +348,7 @@ function ProfileStep() {
       title={t("onboarding.profileTitle")}
       doneLabel={t("onboarding.stepDone")}
       done={done}
+      locked={locked}
       summary={<span className="font-medium text-foreground">{stored}</span>}
     >
       <p className="text-sm text-muted-foreground">{t("onboarding.profileDesc")}</p>
