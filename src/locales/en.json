@@ -100,6 +100,12 @@
     "loading": "Loading settings…",
     "loadError": "Could not load settings.",
     "saveError": "Could not save settings.",
+    "dangerZone": "Danger zone",
+    "resetApp": "Reset application",
+    "resetAppDesc": "Clears KnoxKit's configuration and sends you back to the first-run setup. Your instances are not touched.",
+    "resetConfirm": "Yes, reset",
+    "resetCancel": "Cancel",
+    "resetting": "Resetting…",
     "version": "KnoxKit v2.0.0",
     "tagline": "A Project Zomboid instance manager."
   },

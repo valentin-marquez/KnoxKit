@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Brand } from "@/components/layout/brand";
@@ -6,7 +7,9 @@ import { type Theme, useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { useSettings, useUpdateSettings } from "@/lib/queries";
+import { useToast } from "@/components/ui/toast";
+import * as anim from "@/lib/anim";
+import { useResetSetup, useSettings, useUpdateSettings } from "@/lib/queries";
 import * as dialog from "@/lib/tauri/dialog";
 import type { Patch } from "@/types/settings";
 
@@ -67,6 +70,8 @@ function SettingsRoute() {
             </div>
             <p className="mt-2 text-xs text-muted-foreground">{t("settings.tagline")}</p>
           </Section>
+
+          <DangerSection />
         </div>
       </div>
     </div>
@@ -182,6 +187,74 @@ function PathsSection() {
         </Button>
       </div>
     </Section>
+  );
+}
+
+/** Destructive: wipe app config and bounce back to first-run onboarding. */
+function DangerSection() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const reset = useResetSetup();
+  const [confirming, setConfirming] = useState(false);
+
+  function doReset() {
+    reset.mutate(undefined, {
+      onSuccess: () => {
+        setConfirming(false);
+        void navigate({ to: "/onboarding" });
+      },
+      onError: () => toast({ title: t("settings.saveError"), variant: "destructive" }),
+    });
+  }
+
+  return (
+    <section className="rounded-md border border-destructive/40 bg-card p-4">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-destructive">
+        {t("settings.dangerZone")}
+      </h2>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-sm text-xs text-muted-foreground">{t("settings.resetAppDesc")}</p>
+        <AnimatePresence mode="wait" initial={false}>
+          {confirming ? (
+            <motion.div
+              key="confirm"
+              layout
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={anim.snappy}
+              className="flex items-center gap-2"
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={reset.isPending}
+                onClick={() => setConfirming(false)}
+              >
+                {t("settings.resetCancel")}
+              </Button>
+              <Button variant="destructive" size="sm" disabled={reset.isPending} onClick={doReset}>
+                {reset.isPending ? t("settings.resetting") : t("settings.resetConfirm")}
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="idle"
+              layout
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={anim.snappy}
+            >
+              <Button variant="destructive" size="sm" onClick={() => setConfirming(true)}>
+                {t("settings.resetApp")}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
   );
 }
 

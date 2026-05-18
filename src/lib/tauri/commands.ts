@@ -106,3 +106,8 @@ export function detectSteamcmd(): Promise<string | null> {
 export function installSteamcmd(): Promise<string> {
   return invoke<string>("install_steamcmd");
 }
+
+/** Reset settings to defaults; re-triggers first-run onboarding. */
+export function resetSetup(): Promise<SetupStatus> {
+  return invoke<SetupStatus>("reset_setup");
+}

@@ -110,6 +110,12 @@
     "loading": "Cargando ajustes…",
     "loadError": "No se pudieron cargar los ajustes.",
     "saveError": "No se pudieron guardar los ajustes.",
+    "dangerZone": "Zona peligrosa",
+    "resetApp": "Reiniciar aplicación",
+    "resetAppDesc": "Borra la configuración de KnoxKit y te manda de vuelta al setup inicial. No toca tus instancias.",
+    "resetConfirm": "Sí, reiniciar",
+    "resetCancel": "Cancelar",
+    "resetting": "Reiniciando…",
     "version": "KnoxKit v2.0.0",
     "tagline": "Un gestor de instancias de Project Zomboid."
   },

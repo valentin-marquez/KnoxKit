@@ -19,6 +19,7 @@ import {
   launchInstance,
   listInstances,
   listMods,
+  resetSetup,
   setGamePath,
   toggleMod,
   updateSettings,
@@ -164,6 +165,18 @@ export function useInstallSteamcmd() {
   const qc = useQueryClient();
   return useMutation<string, Error, void>({
     mutationFn: () => installSteamcmd(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.setup });
+      qc.invalidateQueries({ queryKey: keys.settings });
+    },
+  });
+}
+
+/** Reset all app config to defaults, then refresh setup status + settings. */
+export function useResetSetup() {
+  const qc = useQueryClient();
+  return useMutation<SetupStatus, Error, void>({
+    mutationFn: () => resetSetup(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.setup });
       qc.invalidateQueries({ queryKey: keys.settings });
