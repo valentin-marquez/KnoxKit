@@ -156,13 +156,20 @@ export function useSettings() {
   });
 }
 
-/** Apply a partial settings patch, then refresh from disk. */
+/**
+ * Apply a partial settings patch, then refresh from disk. Also invalidates
+ * the setup status: the onboarding gate's `needs_onboarding` is backend-
+ * derived from `settings.profile_username`, so persisting the profile name
+ * must re-read it — otherwise the gate stays stale and the Continue button
+ * never enables even though every step shows done.
+ */
 export function useUpdateSettings() {
   const qc = useQueryClient();
   return useMutation<Settings, Error, Patch>({
     mutationFn: (patch) => updateSettings(patch),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.settings });
+      qc.invalidateQueries({ queryKey: keys.setup });
     },
   });
 }

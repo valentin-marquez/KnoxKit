@@ -104,7 +104,15 @@ function StepCard({
         </AnimatePresence>
       </motion.div>
 
-      <AnimatePresence initial={false} mode="wait">
+      {/*
+       * `popLayout` (not `wait`): pop the exiting form out of flow so the
+       * summary fades in while the parent `layout` spring drives the height
+       * change as one continuous motion. `wait` collapsed the form to 0,
+       * paused, then grew back for the summary — a double-bounce that read
+       * as the form/step "snapping" in abruptly when a step turned done or
+       * a locked step unlocked.
+       */}
+      <AnimatePresence initial={false} mode="popLayout">
         {locked ? null : done ? (
           <motion.div
             key="summary"
