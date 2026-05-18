@@ -55,6 +55,103 @@ fn instance_file(id: &str) -> Result<PathBuf> {
     Ok(instance_dir(id)?.join("instance.json"))
 }
 
+/// Relative name an instance icon is always stored under inside its folder.
+///
+/// Persisted into `instance.icon_path` and emitted as the `.knoxpack`
+/// `icon.png` on export (see docs/modpack-format.md §1).
+pub const ICON_FILE: &str = "icon.png";
+
+/// File extensions accepted as an icon source.
+///
+/// Extension-only gate — full image/dimension validation is intentionally
+/// out of scope (no image-decoding crate). TODO(review): decode the source
+/// and validate it is a real 256×256-ish PNG/JPEG before copying.
+const ICON_EXTS: &[&str] = &["png", "jpg", "jpeg", "webp", "gif", "bmp"];
+
+/// Read `profile_username` from the global `settings.json`, if set.
+///
+/// `services/` must not import `commands/`, so this re-reads the settings
+/// file with the same default-on-absent contract `commands::settings` uses
+/// (small, local JSON — no dedicated settings service module exists).
+fn profile_username() -> Option<String> {
+    let file = paths::settings_file().ok()?;
+    if !file.exists() {
+        return None;
+    }
+    let bytes = std::fs::read(&file).ok()?;
+    let s: crate::domain::settings::Settings = serde_json::from_slice(&bytes).ok()?;
+    s.profile_username.filter(|u| !u.trim().is_empty())
+}
+
+/// Validate `src_path` is a readable image file, copy it to
+/// `<instance>/icon.png` (atomic temp+rename), then set
+/// `instance.icon_path = Some("icon.png")` and persist `instance.json`.
+///
+/// Used by instance creation and the `set_instance_icon` command. The source
+/// is accepted by extension + existence only (see [`ICON_EXTS`]); the instance
+/// must already exist. A missing/empty source, a non-file path, or an
+/// unrecognized extension is rejected — never a silent no-op.
+///
+/// # Errors
+/// [`Error::NotFound`] if the instance or the source path does not exist;
+/// [`Error::Validation`] if the source is not a regular file or its extension
+/// is not an accepted image type.
+pub fn set_icon(instance_id: &str, src_path: &str) -> Result<()> {
+    // The instance must exist (also lazily migrates a v1 file to v2).
+    let mut inst = read(instance_id)?;
+
+    let src = Path::new(src_path);
+    if !src.exists() {
+        return Err(Error::NotFound(format!("icon source {src_path}")));
+    }
+    if !src.is_file() {
+        return Err(Error::Validation(format!(
+            "icon source is not a file: {src_path}"
+        )));
+    }
+    let ext_ok = src
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_ascii_lowercase())
+        .map(|e| ICON_EXTS.contains(&e.as_str()))
+        .unwrap_or(false);
+    if !ext_ok {
+        return Err(Error::Validation(format!(
+            "icon source is not a recognized image (expected one of {ICON_EXTS:?}): {src_path}"
+        )));
+    }
+
+    // TODO(review): decode + validate real image bytes / dimensions here
+    // (currently extension + existence only — no image crate in scope).
+    let bytes = std::fs::read(src)?;
+    let dest = instance_dir(instance_id)?.join(ICON_FILE);
+    atomic_write(&dest, &bytes)?;
+
+    inst.icon_path = Some(ICON_FILE.to_string());
+    atomic_write(
+        &instance_file(instance_id)?,
+        serde_json::to_vec_pretty(&inst)?.as_slice(),
+    )?;
+    rebuild_index()?;
+    Ok(())
+}
+
+/// Write raw `bytes` as the instance's `icon.png` and persist
+/// `instance.icon_path`. Used by modpack import (the icon is read from the
+/// archive, not a filesystem path). Atomic write, then `index.json` rebuild.
+pub fn set_icon_bytes(instance_id: &str, bytes: &[u8]) -> Result<()> {
+    let mut inst = read(instance_id)?;
+    let dest = instance_dir(instance_id)?.join(ICON_FILE);
+    atomic_write(&dest, bytes)?;
+    inst.icon_path = Some(ICON_FILE.to_string());
+    atomic_write(
+        &instance_file(instance_id)?,
+        serde_json::to_vec_pretty(&inst)?.as_slice(),
+    )?;
+    rebuild_index()?;
+    Ok(())
+}
+
 /// Read and return every instance found on disk.
 pub fn list() -> Result<Vec<Instance>> {
     let dir = paths::instances_dir()?;
@@ -166,6 +263,14 @@ pub fn create(input: instance::Input) -> Result<Instance> {
     paths::ensure_dir(&dir.join("saves"))?;
     paths::ensure_dir(&dir.join("workshop"))?;
 
+    // A blank/absent author defaults to the profile username (P4 surfaces
+    // the setting; reading it here keeps `services/` independent of
+    // `commands/`). Empty strings collapse to `None` rather than persisting "".
+    let author = input
+        .author
+        .filter(|a| !a.trim().is_empty())
+        .or_else(profile_username);
+
     let inst = Instance {
         schema_version: instance::SCHEMA_VERSION,
         id: id.clone(),
@@ -176,11 +281,13 @@ pub fn create(input: instance::Input) -> Result<Instance> {
         last_played: None,
         path: dir.to_string_lossy().to_string(),
         max_ram_mb: input.max_ram_mb,
-        icon_path: input.icon_path,
-        description: input.description,
-        author: input.author,
-        pack_version: input.pack_version,
-        pack_id: input.pack_id,
+        // Set authoritatively by `set_icon` below if a source was supplied;
+        // a raw relative `icon_path` from the input is not trusted.
+        icon_path: None,
+        description: input.description.filter(|d| !d.trim().is_empty()),
+        author,
+        pack_version: input.pack_version.filter(|v| !v.trim().is_empty()),
+        pack_id: input.pack_id.filter(|p| !p.trim().is_empty()),
         source: input.source,
     };
 
@@ -194,6 +301,20 @@ pub fn create(input: instance::Input) -> Result<Instance> {
         &dir.join("mods.json"),
         serde_json::to_vec_pretty(&empty)?.as_slice(),
     )?;
+
+    // Copy the chosen icon into the folder (atomically) and stamp
+    // `icon_path`; `set_icon` re-reads + rewrites `instance.json`.
+    if let Some(src) = input
+        .icon_source_path
+        .as_deref()
+        .filter(|s| !s.trim().is_empty())
+    {
+        set_icon(&id, src)?;
+        // Re-read so the returned value reflects the persisted `icon_path`.
+        let inst = read(&id)?;
+        rebuild_index()?;
+        return Ok(inst);
+    }
 
     rebuild_index()?;
     Ok(inst)
@@ -304,6 +425,7 @@ mod tests {
             pack_version: None,
             pack_id: None,
             source: None,
+            icon_source_path: None,
         }
     }
 
@@ -493,6 +615,98 @@ mod tests {
         with_temp_data(|| {
             let err = touch_last_played("nope").expect_err("missing instance");
             assert!(matches!(err, Error::NotFound(_)));
+        });
+    }
+
+    #[test]
+    fn set_icon_copies_file_and_persists_path() {
+        with_temp_data(|| {
+            let inst = create(input("Iconed", stable("41.78"), Vec::new())).expect("create");
+            assert_eq!(inst.icon_path, None);
+
+            let src = std::env::temp_dir().join("knoxkit-test-icon.png");
+            std::fs::write(&src, b"PNGDATA").expect("write src icon");
+
+            set_icon(&inst.id, &src.to_string_lossy()).expect("set_icon");
+
+            // Bytes landed at <instance>/icon.png …
+            let dest = instance_dir(&inst.id).expect("dir").join(ICON_FILE);
+            assert_eq!(std::fs::read(&dest).expect("read dest"), b"PNGDATA");
+            // … and icon_path is persisted on the instance.
+            let got = read(&inst.id).expect("reread");
+            assert_eq!(got.icon_path.as_deref(), Some("icon.png"));
+
+            std::fs::remove_file(&src).ok();
+        });
+    }
+
+    #[test]
+    fn set_icon_rejects_missing_source() {
+        with_temp_data(|| {
+            let inst = create(input("NoIcon", stable("41.78"), Vec::new())).expect("create");
+            let err = set_icon(&inst.id, "Z:/does/not/exist.png").expect_err("missing src");
+            assert!(matches!(err, Error::NotFound(_)));
+        });
+    }
+
+    #[test]
+    fn set_icon_rejects_non_image_extension() {
+        with_temp_data(|| {
+            let inst = create(input("BadExt", stable("41.78"), Vec::new())).expect("create");
+            let src = std::env::temp_dir().join("knoxkit-test-icon.txt");
+            std::fs::write(&src, b"not an image").expect("write txt");
+            let err = set_icon(&inst.id, &src.to_string_lossy()).expect_err("bad ext");
+            assert!(matches!(err, Error::Validation(_)));
+            std::fs::remove_file(&src).ok();
+        });
+    }
+
+    #[test]
+    fn set_icon_missing_instance_is_not_found() {
+        with_temp_data(|| {
+            let err = set_icon("nope", "whatever.png").expect_err("missing instance");
+            assert!(matches!(err, Error::NotFound(_)));
+        });
+    }
+
+    #[test]
+    fn create_with_icon_source_copies_and_sets_path() {
+        with_temp_data(|| {
+            let src = std::env::temp_dir().join("knoxkit-create-icon.png");
+            std::fs::write(&src, b"ICONBYTES").expect("write src");
+
+            let mut inp = input("WithIcon", stable("41.78"), Vec::new());
+            inp.icon_source_path = Some(src.to_string_lossy().to_string());
+            let inst = create(inp).expect("create with icon");
+
+            assert_eq!(inst.icon_path.as_deref(), Some("icon.png"));
+            let dest = instance_dir(&inst.id).expect("dir").join(ICON_FILE);
+            assert_eq!(std::fs::read(&dest).expect("read"), b"ICONBYTES");
+
+            std::fs::remove_file(&src).ok();
+        });
+    }
+
+    #[test]
+    fn create_blank_author_falls_back_to_profile_username() {
+        with_temp_data(|| {
+            // Seed a settings.json with a profile username.
+            let s = crate::domain::settings::Settings {
+                profile_username: Some("survivor".into()),
+                ..crate::domain::settings::Settings::default()
+            };
+            let f = paths::settings_file().expect("settings path");
+            paths::ensure_parent(&f).expect("ensure parent");
+            std::fs::write(&f, serde_json::to_vec_pretty(&s).expect("ser")).expect("write");
+
+            let inst = create(input("Authored", stable("41.78"), Vec::new())).expect("create");
+            assert_eq!(inst.author.as_deref(), Some("survivor"));
+
+            // An explicit author wins over the profile fallback.
+            let mut inp = input("Explicit", stable("41.78"), Vec::new());
+            inp.author = Some("hand-set".into());
+            let inst2 = create(inp).expect("create 2");
+            assert_eq!(inst2.author.as_deref(), Some("hand-set"));
         });
     }
 }

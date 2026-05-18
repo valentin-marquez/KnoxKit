@@ -54,8 +54,16 @@ mod tests {
             pack_version: None,
             pack_id: None,
             source: None,
+            icon_source_path: None,
         })
         .expect("create source");
+
+        // Give the source instance an icon so the roundtrip can prove the
+        // `.knoxpack` `icon.png` is lossless (export → import → same bytes).
+        let icon_src = tmp.path().join("source-icon.png");
+        let icon_bytes: &[u8] = b"\x89PNG\r\n\x1a\nFAKE-BUT-DETERMINISTIC-ICON";
+        std::fs::write(&icon_src, icon_bytes).expect("write source icon");
+        disk::set_icon(&inst.id, &icon_src.to_string_lossy()).expect("set source icon");
 
         // Give it two workshop ids in mods.json.
         let coll = Collection {
@@ -122,6 +130,29 @@ mod tests {
         assert!(copied.exists(), "jvm-args.txt override should be copied");
         let copied_body = std::fs::read_to_string(&copied).expect("read override");
         assert_eq!(copied_body, "-Xmx6g\n-Dzomboid=1");
+
+        // --- the icon round-trips byte-for-byte -------------------------
+        assert_eq!(
+            new_inst.icon_path.as_deref(),
+            Some("icon.png"),
+            "imported instance should carry the restored icon path"
+        );
+        let imported_icon = std::path::Path::new(&new_inst.path).join("icon.png");
+        assert!(imported_icon.is_file(), "icon.png should exist on import");
+        assert_eq!(
+            std::fs::read(&imported_icon).expect("read imported icon"),
+            icon_bytes,
+            "icon bytes must survive export → import unchanged"
+        );
+        // And it is present in the exported archive at the root.
+        {
+            let f = std::fs::File::open(&pack_path).expect("open pack icon");
+            let mut a = zip::ZipArchive::new(f).expect("zip icon");
+            let mut e = a.by_name("icon.png").expect("archive has icon.png");
+            let mut b = Vec::new();
+            e.read_to_end(&mut b).expect("read archive icon");
+            assert_eq!(b, icon_bytes, "archive icon matches source bytes");
+        }
 
         // --- manifest roundtrips (re-read after import) -----------------
         let reread_manifest = {

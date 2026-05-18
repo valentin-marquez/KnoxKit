@@ -35,8 +35,8 @@ pub async fn run(jobs: &JobSender, pack_path: &str, target_name: &str) -> Result
     // --- create instance -------------------------------------------------
     // The manifest carries `game_version` as a display string; parse it
     // best-effort back into the structured value. Identity fields pass
-    // through so an exported→imported instance keeps its pack identity
-    // (icon is intentionally NOT handled here — that is P3).
+    // through so an exported→imported instance keeps its pack identity.
+    // The icon (if present) is restored from the archive after creation.
     let inst = disk::create(instance::Input {
         name: target_name.to_string(),
         game_version: instance::GameVersion::parse_loose(&manifest.game_version),
@@ -52,7 +52,21 @@ pub async fn run(jobs: &JobSender, pack_path: &str, target_name: &str) -> Result
             pack_id: manifest.pack_id.clone(),
             pack_version: manifest.version.clone(),
         }),
+        icon_source_path: None,
     })?;
+
+    // --- restore the pack icon (lossless roundtrip) ---------------------
+    // docs/modpack-format.md §1: optional `icon.png` at the archive root.
+    // Read it out and persist it into the new instance folder; a missing
+    // icon is simply skipped (the field stays `None`).
+    if let Ok(mut entry) = archive.by_name(disk::ICON_FILE) {
+        let mut icon_bytes = Vec::new();
+        entry.read_to_end(&mut icon_bytes)?;
+        drop(entry);
+        if !icon_bytes.is_empty() {
+            disk::set_icon_bytes(&inst.id, &icon_bytes)?;
+        }
+    }
 
     // --- copy whitelisted overrides only --------------------------------
     let names: Vec<String> = archive.file_names().map(|s| s.to_string()).collect();

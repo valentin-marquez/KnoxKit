@@ -78,6 +78,19 @@ pub fn run(instance_id: &str, output_path: &str) -> Result<()> {
         zip.write_all(inst.jvm_args.join("\n").as_bytes())?;
     }
 
+    // Lossless icon roundtrip: if the instance carries an `icon.png`, embed
+    // it at the archive root (docs/modpack-format.md §1). The on-disk file is
+    // the source of truth — fall back to it rather than trusting only the
+    // `icon_path` field, but only emit when both agree and the file exists.
+    if inst.icon_path.is_some() {
+        let icon = std::path::Path::new(&inst.path).join(disk::ICON_FILE);
+        if icon.is_file() {
+            let bytes = std::fs::read(&icon)?;
+            zip.start_file(disk::ICON_FILE, opts)?;
+            zip.write_all(&bytes)?;
+        }
+    }
+
     zip.finish()?;
     Ok(())
 }

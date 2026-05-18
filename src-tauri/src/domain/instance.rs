@@ -223,6 +223,14 @@ pub struct Input {
     /// Optional managed-pack source link (P3 surfaces this).
     #[serde(default)]
     pub source: Option<Source>,
+    /// Optional absolute path to an image to copy in as the instance icon.
+    ///
+    /// This is the *source* to copy at create time — it is **not** persisted
+    /// as-is. On create, if set, the file is copied to `<instance>/icon.png`
+    /// and `Instance::icon_path` becomes `Some("icon.png")`. Additive and
+    /// defaulted so `create_instance` stays backward-compatible (P3).
+    #[serde(default)]
+    pub icon_source_path: Option<String>,
 }
 
 #[cfg(test)]

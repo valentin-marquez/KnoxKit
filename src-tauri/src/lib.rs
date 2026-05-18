@@ -73,6 +73,20 @@ pub fn run() {
                     worker.run(rx).await;
                 });
             }
+
+            // Instance icons live under the app data dir resolved via the
+            // `directories` crate / `KNOXKIT_DATA_DIR` — NOT Tauri's
+            // `$APPDATA/<identifier>` — so a static `tauri.conf` asset scope
+            // can't express them. Grant the `asset:` protocol read access to
+            // the instances tree at runtime instead (best-effort).
+            {
+                use tauri::Manager as _;
+                if let Ok(dir) = crate::paths::instances_dir()
+                    && let Err(e) = app.asset_protocol_scope().allow_directory(&dir, true)
+                {
+                    tracing::warn!("could not extend asset scope to {}: {e}", dir.display());
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -81,6 +95,7 @@ pub fn run() {
             commands::create_instance,
             commands::delete_instance,
             commands::launch_instance,
+            commands::set_instance_icon,
             commands::list_mods,
             commands::import_workshop_collection,
             commands::toggle_mod,

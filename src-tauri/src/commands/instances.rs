@@ -43,3 +43,10 @@ pub async fn launch(id: String) -> Result<()> {
     tracing::info!("launching instance {id}");
     launch::run(&id)
 }
+
+/// Set (or replace) an instance's icon from a local image file.
+/// (registered via `commands::set_instance_icon`)
+pub async fn set_icon(id: String, src_path: String) -> Result<Instance> {
+    disk::set_icon(&id, &src_path)?;
+    disk::read(&id)
+}

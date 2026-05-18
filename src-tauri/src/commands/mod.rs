@@ -65,6 +65,16 @@ pub async fn launch_instance(_state: tauri::State<'_, State>, id: String) -> Res
     instances::launch(id).await
 }
 
+/// `set_instance_icon` → `commands::instances::set_icon`.
+#[tauri::command]
+pub async fn set_instance_icon(
+    _state: tauri::State<'_, State>,
+    id: String,
+    src_path: String,
+) -> Result<Instance> {
+    instances::set_icon(id, src_path).await
+}
+
 // --- mods ---------------------------------------------------------------
 
 /// `list_mods` → `commands::mods::list`.
